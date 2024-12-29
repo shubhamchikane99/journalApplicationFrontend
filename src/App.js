@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'; // Use Routes instead of Switch
-import LoginForm from './components/LoginForm';  // Import LoginForm component
-import { fetchData } from './services/apiService';  // Import fetchData from apiService
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'; // Removed 'useLocation'
+import LoginForm from './components/LoginForm';
+import { fetchData } from './services/apiService';
 import { endPoint } from './services/endPoint';
-import Loader from './components/Loader'; // Make sure the Loader component is defined somewhere
+import Loader from './components/Loader';
+
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -16,21 +17,13 @@ const App = () => {
   const fetchLoginData = async (username, password) => {
     setLoading(true);
     try {
-      const data = await fetchData(endPoint.users+"/log-in?userName="+username+"&password="+password)
-           // Check outer and inner errors in the response
-      if (data.error) {
-        setError(data.data.errorMessage || 'An unexpected error occurred.');
-        setIsLoggedIn(false);
-        return;
-      }
-
-      if (data.data.error) {
+      const data = await fetchData(endPoint.users + "/log-in?userName=" + username + "&password=" + password);
+      if (data.error || data.data.error) {
         setError(data.data.errorMessage || 'Invalid username or password.');
         setIsLoggedIn(false);
         return;
       }
 
-      // If no errors, set login data and mark as logged in
       setLoginData(data.data);
       setUsername(username);
       setIsLoggedIn(true);
@@ -51,7 +44,7 @@ const App = () => {
             element={
               !isLoggedIn ? (
                 loading ? (
-                  <Loader /> // Use the Loader component here
+                  <Loader />
                 ) : (
                   <LoginForm
                     setIsLoggedIn={setIsLoggedIn}
@@ -61,11 +54,10 @@ const App = () => {
                   />
                 )
               ) : (
-                <Navigate to="/login-data" />
+                <Navigate to="/login-data" state={{ username }} />
               )
             }
           />
-  
           <Route
             path="/login-data"
             element={
@@ -73,7 +65,7 @@ const App = () => {
                 <div>
                   <h2>Welcome, {username}</h2>
                   {loading ? (
-                    <Loader /> // Use the Loader component here as well
+                    <Loader />
                   ) : (
                     <p>Login data: {JSON.stringify(loginData, null, 2)}</p>
                   )}
