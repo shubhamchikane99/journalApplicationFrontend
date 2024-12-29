@@ -1,0 +1,9 @@
+.loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full height of the screen */
+    font-size: 1.2em;
+    color: #3498db; /* Spinner color */
+  }
+  
