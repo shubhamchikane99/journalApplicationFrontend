@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'; // Removed 'useLocation'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginForm from './components/LoginForm';
 import { fetchData } from './services/apiService';
 import { endPoint } from './services/endPoint';
@@ -37,47 +37,52 @@ const App = () => {
 
   return (
     <Router>
-      <div>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              !isLoggedIn ? (
-                loading ? (
-                  <Loader />
-                ) : (
-                  <LoginForm
-                    setIsLoggedIn={setIsLoggedIn}
-                    setUsername={setUsername}
-                    fetchLoginData={fetchLoginData}
-                    error={error}
-                  />
-                )
+      <Routes>
+        <Route
+          path="/"
+          element={
+            !isLoggedIn ? (
+              loading ? (
+                <Loader />
               ) : (
-                <Navigate to="/login-data" state={{ username }} />
+                <LoginForm
+                  setIsLoggedIn={setIsLoggedIn}
+                  setUsername={setUsername}
+                  fetchLoginData={fetchLoginData}
+                  error={error}
+                />
               )
-            }
-          />
-          <Route
-            path="/login-data"
-            element={
-              isLoggedIn ? (
-                <div>
-                  <h2>Welcome, {username}</h2>
-                  {loading ? (
-                    <Loader />
-                  ) : (
-                    <p>Login data: {JSON.stringify(loginData, null, 2)}</p>
-                  )}
-                </div>
-              ) : (
-                <Navigate to="/" />
-              )
-            }
-          />
-        </Routes>
-      </div>
+            ) : (
+              <Navigate to={`/login/${username}`} replace />
+            )
+          }
+        />
+        <Route
+          path="/login/:username"
+          element={
+            isLoggedIn ? (
+              <LoginDataPage loginData={loginData} username={username} />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+      </Routes>
     </Router>
+  );
+};
+
+const LoginDataPage = ({ loginData, username }) => {
+    // Display loader while waiting for data
+    if (!username || !loginData) {
+      return <Loader />;
+    }
+
+  return (
+    <div>
+      <h2>Welcome, {username}</h2>
+      <p>Login data: {JSON.stringify(loginData, null, 2)}</p>
+    </div>
   );
 };
 
