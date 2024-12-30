@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link  } from 'react-router-dom';
 import LoginForm from './components/LoginForm';
 import { fetchData } from './services/apiService';
 import { endPoint } from './services/endPoint';
 import Loader from './components/Loader';
+import SignUpForm from './components/SignUpForm'; // Import the SignUpForm component
+
 
 
 const App = () => {
@@ -45,12 +47,14 @@ const App = () => {
               loading ? (
                 <Loader />
               ) : (
-                <LoginForm
-                  setIsLoggedIn={setIsLoggedIn}
-                  setUsername={setUsername}
-                  fetchLoginData={fetchLoginData}
-                  error={error}
-                />
+                <>
+                  <LoginForm
+                    setIsLoggedIn={setIsLoggedIn}
+                    setUsername={setUsername}
+                    fetchLoginData={fetchLoginData}
+                    error={error}
+                  />
+                </>
               )
             ) : (
               <Navigate to={`/login/${username}`} replace />
@@ -67,16 +71,20 @@ const App = () => {
             )
           }
         />
+        <Route
+          path="/signup"
+          element={<SignUpForm setIsLoggedIn={setIsLoggedIn} />}
+        />
       </Routes>
     </Router>
   );
 };
 
 const LoginDataPage = ({ loginData, username }) => {
-    // Display loader while waiting for data
-    if (!username || !loginData) {
-      return <Loader />;
-    }
+  // Display loader while waiting for data
+  if (!username || !loginData) {
+    return <Loader />;
+  }
 
   return (
     <div>
