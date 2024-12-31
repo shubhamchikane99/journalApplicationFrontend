@@ -10,7 +10,7 @@
     "react-scripts": "5.0.1",
     "web-vitals": "^4.2.4"
   },
-  "proxy": "http://172.18.224.1:8088",
+  "proxy": "http://localhost:8088",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
