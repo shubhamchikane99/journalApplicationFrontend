@@ -8,8 +8,14 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const username = process.env.REACT_APP_API_USERNAME;  
-    const password = process.env.REACT_APP_API_PASSWORD;  
+    // const username = process.env.REACT_APP_API_USERNAME;  
+    // const password = process.env.REACT_APP_API_PASSWORD;  
+
+    const username = sessionStorage.getItem("username"); // Retrieve username
+    const password = sessionStorage.getItem("password"); // Retrieve password
+
+    console.log("username" , username)
+    console.log("pass ", password)
 
     if (username && password) {
       const encodedCredentials = btoa(`${username}:${password}`);

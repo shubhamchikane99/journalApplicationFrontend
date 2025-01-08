@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link  } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate  } from 'react-router-dom';
 import LoginForm from './components/LoginForm';
 import { fetchData } from './services/apiService';
 import { endPoint } from './services/endPoint';
@@ -19,7 +19,8 @@ const App = () => {
   const fetchLoginData = async (username, password) => {
     setLoading(true);
     try {
-      const data = await fetchData(endPoint.users + "/log-in?userName=" + username + "&password=" + password);
+      const data = await fetchData(endPoint.public + "/log-in?userName=" + username + "&password=" + password);
+      
       if (data.error || data.data.error) {
         setError(data.data.errorMessage || 'Invalid username or password.');
         setIsLoggedIn(false);
@@ -28,6 +29,8 @@ const App = () => {
 
       setLoginData(data.data);
       setUsername(username);
+      sessionStorage.setItem('username', username);
+      sessionStorage.setItem('password', password);
       setIsLoggedIn(true);
     } catch (err) {
       setError('Failed to fetch login data. Please try again.');
