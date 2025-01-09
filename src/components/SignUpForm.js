@@ -19,9 +19,11 @@ const SignUpForm = () => {
   const navigate = useNavigate();
 
   const handleSendOtp = async () => {
+    console.log("email " + email);
+    console.log("username " + username)
     if (!email && !username) {
 
-      setError("Please Enter UserName And Email");
+      setError("Please Enter user name And Email");
        return;
     } else if (!email) {
         
@@ -30,7 +32,7 @@ const SignUpForm = () => {
 
     } else if ( !username) {
         
-      setError("Please enter UserName.");
+      setError("Please enter user name.");
       return;
     }
       
@@ -65,13 +67,16 @@ const SignUpForm = () => {
     setLoading(true);
     try {
       // Simulate validate OTP API
-      const data = { success: true }; // Replace with your API call
-
-      if (data.success) {
+       console.log("OTP" + otp)
+       console.log("Email" + email)
+      const data = await fetchData(endPoint.public + "/validate-otp?emailId=" + email + "&otp=" + otp);
+     
+      if (data.data.statusCode===200) {
         alert("OTP verified successfully.");
         setIsOtpVerified(true);
       } else {
-        setError(data.message || "Invalid OTP.");
+         alert(data.data.errorMessage);
+        //setError(data.data.errorMessage || "Invalid OTP.");
       }
     } catch (err) {
       setError("Error validating OTP. Please try again.");
