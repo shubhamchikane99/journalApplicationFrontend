@@ -1,17 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { AuthContext } from "../context/AuthContext";
+import { fetchData } from "../services/apiService";
+import { endPoint } from "../services/endPoint";
 import "./loginFromStyle.css";
 
-const LoginForm = ({ setIsLoggedIn, setUsername, fetchLoginData, error }) => {
+const LoginForm = () => {
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
+  const [error, setError] = useState("");
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate(); // Initialize useNavigate
+
+  const fetchLoginData = async (usernameInput, passwordInput) => {
+    try {
+      const data = await fetchData(
+        endPoint.public + "/log-in?userName=" + usernameInput + "&password=" + passwordInput
+      );
+
+       console.log("data " + data.data.statusCode)
+      if (data.error || data.data.error) {
+        setError(data.data.errorMessage || "Invalid username or password.");
+        return;
+      }
+
+      if (data.data.statusCode === 200) {
+        const userData = data.data.users;
+        login(userData); // Save user data to context and session storage
+        navigate(`${usernameInput}/dashboard`); // Navigate to dashboard
+      }
+    } catch (err) {
+      setError("Failed to fetch login data. Please try again.");
+    }
+  };
 
   const handleLogin = () => {
     if (usernameInput && passwordInput) {
-      setUsername(usernameInput);
-      fetchLoginData(usernameInput, passwordInput);
-      setIsLoggedIn(true);
+      fetchLoginData(usernameInput, passwordInput); // Call fetchLoginData here
     } else {
       alert("Please enter username and password.");
     }
