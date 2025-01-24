@@ -1,0 +1,16 @@
+/* src/styles/global.css */
+.not-found {
+  text-align: center;
+  margin-top: 50px;
+}
+
+.not-found h1 {
+  font-size: 100px;
+  margin: 0;
+  color: #ff6b6b;
+}
+
+.not-found p {
+  font-size: 20px;
+  color: #333;
+}
