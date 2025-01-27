@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { fetchData } from '../services/apiService';
 import { endPoint } from '../services/endPoint';
 import { useNavigate } from "react-router-dom";
-import "./SignUpForm.css";
+import "../styles/SignUpForm.css";
 
 const SignUpForm = () => {
   const [username, setUsername] = useState("");
