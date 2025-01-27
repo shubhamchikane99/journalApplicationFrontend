@@ -1,19 +1,22 @@
-// src/components/PrivateRoute.js
 import React, { useContext } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useParams, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 const PrivateRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
   const { username } = useParams(); // Get username from URL
-  console.log("username f " + username)
+  const location = useLocation(); // Get current route path
 
+  // Get stored username from local storage and sanitize
   let storedUsername = localStorage.getItem("userName");
-  storedUsername = storedUsername.replace(/['"]+/g, "");
-  console.log("storedUsername f " + storedUsername)
+  storedUsername = storedUsername ? storedUsername.replace(/['"]+/g, "") : "";
 
-  // Check if user is authenticated and username matches
-  if (!user || storedUsername !== username) {
+  console.log("user " + user)
+  
+  // Apply the condition only for the dashboard route
+  if (location.pathname.includes("/dashboard") && (!user || storedUsername !== username)) {
+    return <Navigate to="/" replace />;
+  } else if(!user) {
     return <Navigate to="/" replace />;
   }
 
