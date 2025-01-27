@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { AuthContext } from "../context/AuthContext";
 import { fetchData } from "../services/apiService";
 import { endPoint } from "../services/endPoint";
-import "./loginFromStyle.css";
+import "../styles/loginFromStyle.css"
 
 const LoginForm = () => {
   const [usernameInput, setUsernameInput] = useState("");
