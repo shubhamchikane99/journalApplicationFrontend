@@ -5,10 +5,12 @@ import "../styles/NavBar.css"; // Import the CSS file
 const NavBar = ({ onLogout }) => {
   return (
     <nav className="navbar">
+       <div class="nav-links">
+       <Link to="/journal-entry">Journal Entry</Link>
       <Link to="/chat">Chat</Link>
-      <Link to="/journal-entry">Journal Entry</Link>
       <Link to="/tic-tac-toe">Tic Tac Toe</Link>
-      <button onClick={onLogout}>Logout</button>
+      </div>
+      <button class="logout-btn" onClick={onLogout}>Logout</button>
     </nav>
   );
 };

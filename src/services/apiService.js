@@ -11,9 +11,13 @@ api.interceptors.request.use(
     // const username = process.env.REACT_APP_API_USERNAME;  
     // const password = process.env.REACT_APP_API_PASSWORD;  
 
-    const username = sessionStorage.getItem("username"); // Retrieve username
-    const password = sessionStorage.getItem("password"); // Retrieve password
+    
+    const username =  localStorage.getItem("userId"); // Retrieve username
+    const password =  localStorage.getItem("userPassword"); // Retrieve password
 
+    const additionalData =   JSON.parse(localStorage.getItem("user"));
+
+  console.log("additionalData " + additionalData)
     console.log("username" , username)
     console.log("pass ", password)
 
@@ -35,6 +39,17 @@ export const fetchData = async (endpoint) => {
     return response.data;
   } catch (error) {
     console.error("Error fetching data:", error);
+    throw error;
+  }
+};
+
+// Post data to a specific endpoint
+export const postData = async (endpoint, payload) => {
+  try {
+    const response = await api.post(endpoint, payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting data:", error);
     throw error;
   }
 };

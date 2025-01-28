@@ -21,6 +21,9 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null); // Clear user data from state
     localStorage.removeItem("user"); // Remove user data from localStorage
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userPassword");
   };
 
   useEffect(() => {
