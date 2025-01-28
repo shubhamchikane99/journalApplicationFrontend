@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { fetchData } from '../services/apiService';
-import { endPoint } from '../services/endPoint';
+import { fetchData } from "../services/apiService";
+import { endPoint } from "../services/endPoint";
 import { useNavigate } from "react-router-dom";
 import "../styles/SignUpForm.css";
 
@@ -19,35 +19,26 @@ const SignUpForm = () => {
   const navigate = useNavigate();
 
   const handleSendOtp = async () => {
-    console.log("email " + email);
-    console.log("username " + username)
     if (!email && !username) {
-
-      setError("Please Enter user name And Email");
-       return;
+      setError("Please enter both username and email.");
+      return;
     } else if (!email) {
-        
       setError("Please enter an email to send OTP.");
       return;
-
-    } else if ( !username) {
-        
-      setError("Please enter user name.");
+    } else if (!username) {
+      setError("Please enter a username.");
       return;
     }
-      
 
     setOtpLoading(true);
     try {
-      console.log("email " + email);
       // API call to send OTP
-      const data = await fetchData(endPoint.public + "/send-opt?emailId=" + email);
+      const data = await fetchData(endPoint.public + "/send-otp?emailId=" + email);
 
-      console.log(data.data.statusCode);
-
-      if (data.data.error===false) {
+      if (data.data.error === false) {
         alert("OTP sent to your email.");
         setIsOtpSent(true);
+        setError(""); // Clear any previous error messages
       } else {
         setError(data.message || "Failed to send OTP.");
       }
@@ -66,17 +57,17 @@ const SignUpForm = () => {
 
     setLoading(true);
     try {
-      // Simulate validate OTP API
-       console.log("OTP" + otp)
-       console.log("Email" + email)
-      const data = await fetchData(endPoint.public + "/validate-otp?emailId=" + email + "&otp=" + otp);
-     
-      if (data.data.statusCode===200) {
+      // API call to validate OTP
+      const data = await fetchData(
+        endPoint.public + "/validate-otp?emailId=" + email + "&otp=" + otp
+      );
+
+      if (data.data.statusCode === 200) {
         alert("OTP verified successfully.");
         setIsOtpVerified(true);
+        setError(""); // Clear any previous error messages
       } else {
-         alert(data.data.errorMessage);
-        //setError(data.data.errorMessage || "Invalid OTP.");
+        setError(data.data.errorMessage || "Invalid OTP.");
       }
     } catch (err) {
       setError("Error validating OTP. Please try again.");
@@ -105,7 +96,8 @@ const SignUpForm = () => {
 
     setLoading(true);
     try {
-      const data = { success: true }; // Simulate sign-up API response
+      // Simulate sign-up API response
+      const data = { success: true };
 
       if (data.success) {
         alert("Account created successfully!");
@@ -166,18 +158,24 @@ const SignUpForm = () => {
               type="button"
               onClick={handleValidateOtp}
               disabled={loading}
+              style={{ marginBottom: "5px", marginTop : "5px" }}
+
             >
               {loading ? "Validating OTP..." : "Validate OTP"}
+            </button>
+            <button
+              type="button"
+              onClick={handleSendOtp}
+              disabled={otpLoading}
+              
+            >
+              {otpLoading ? "Resending OTP..." : "Resend OTP"}
             </button>
           </div>
         )}
 
         {!isOtpSent && (
-          <button
-            type="button"
-            onClick={handleSendOtp}
-            disabled={otpLoading}
-          >
+          <button type="button" onClick={handleSendOtp} disabled={otpLoading}>
             {otpLoading ? "Sending OTP..." : "Send OTP"}
           </button>
         )}

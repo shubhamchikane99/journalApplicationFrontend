@@ -1,39 +1,32 @@
-/* NavBar.css */
-
-/* General nav styling */
 .navbar {
-    display: flex;
-    gap: 20px;
-    padding: 10px;
-    background-color: #f0f0f0;
-    border-bottom: 2px solid #ccc;
-  }
-  
-  /* Styling for links */
-  .navbar a {
-    text-decoration: none;
-    color: #333;
-    font-weight: bold;
-    transition: color 0.3s ease;
-  }
-  
-  .navbar a:hover {
-    color: #007bff;
-  }
-  
-  /* Styling for logout button */
-  .navbar button {
-    background-color: red;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    font-weight: bold;
-    border-radius: 4px;
-    transition: background-color 0.3s ease;
-  }
-  
-  .navbar button:hover {
-    background-color: darkred;
-  }
-  
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: white;
+  border-bottom: 1px solid #ccc;
+  padding: 10px 20px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 15px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: black;
+  font-weight: bold;
+  padding: 8px 12px;
+  width: auto;
+}
+
+.logout-btn {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 5px;
+  width: auto;
+}

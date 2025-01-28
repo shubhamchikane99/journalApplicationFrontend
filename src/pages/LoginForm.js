@@ -17,14 +17,14 @@ const LoginForm = () => {
       const data = await fetchData(
         endPoint.public + "/log-in?userName=" + usernameInput + "&password=" + passwordInput
       );
-
-       console.log("data " + data.data.statusCode)
       if (data.error || data.data.error) {
         setError(data.data.errorMessage || "Invalid username or password.");
         return;
       }
 
       if (data.data.statusCode === 200) {
+        localStorage.setItem("userPassword",passwordInput );
+        localStorage.setItem("userId",usernameInput );
         const userData = data.data.users;
         login(userData); // Save user data to context and session storage
         navigate(`${usernameInput}/dashboard`); // Navigate to dashboard
