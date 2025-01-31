@@ -11,10 +11,13 @@ export const AuthProvider = ({ children }) => {
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
+  
+
   const login = (userData) => {
     setUser(userData); // Set user data in state
     localStorage.setItem("user", JSON.stringify(userData)); // Save user data in localStorage
     localStorage.setItem("userName", JSON.stringify(userData.userName)); // Save user data in localStorage
+     
   };
 
  

@@ -23,6 +23,7 @@ const LoginForm = () => {
       }
 
       if (data.data.statusCode === 200) {
+        localStorage.setItem("usersId", JSON.stringify(data.data.users.id))
         localStorage.setItem("userPassword",passwordInput );
         localStorage.setItem("userId",usernameInput );
         const userData = data.data.users;
