@@ -16,7 +16,7 @@ const fetchUsersData = async (setUsers, setError) => {
     }
 
     if (data.data && Array.isArray(data.data)) {
-      console.log("set Data", data.data);
+      console.log("✅ Fetched users:", data.data);
       setUsers(data.data); // Set the fetched users
     }
   } catch (err) {
@@ -27,22 +27,23 @@ const fetchUsersData = async (setUsers, setError) => {
 const Chat = () => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null); // Logged-in user
+  const [currentUser, setCurrentUser] = useState(null);
   const [error, setError] = useState("");
 
   // Fetch users when the component loads
   useEffect(() => {
-    fetchUsersData(setUsers, setError); // Call the function to fetch users
+    fetchUsersData(setUsers, setError);
 
     // Get the logged-in user from local storage (from login)
-    const loggedInUser = localStorage.getItem("usersId"); // Change to session storage if needed
-    console.log("loggedInUser " + loggedInUser)
+    const loggedInUser = JSON.parse(localStorage.getItem("user")); // Make sure to parse JSON
+    console.log("✅ Logged-in User:", loggedInUser);
+
     if (loggedInUser) {
       setCurrentUser(loggedInUser);
     } else {
       setError("You are not logged in.");
     }
-  }, []); 
+  }, []);
 
   return (
     <div className="chat-container">
