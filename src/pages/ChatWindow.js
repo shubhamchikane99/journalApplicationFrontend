@@ -130,6 +130,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         {messages.map((msg, index) => (
           <div key={index} className={msg.senderId === currentUser.id ? "my-message" : "other-message"}>
             <b>{msg.senderId === currentUser.id ? "You" : selectedUser.userName}:</b> {msg.content}
+            <div className="message-time">{msg.insertDateTime}</div>
           </div>
         ))}
         <div ref={messagesEndRef} />
