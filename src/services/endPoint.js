@@ -2,6 +2,7 @@
 export const endPoint = {
     users: "v1/users",
     public:"public",
-    saveJournal :"v1/journal"
+    saveJournal :"v1/journal",
+    chatMessage : "v1/chat-message"
   };
   

@@ -6,8 +6,8 @@ const UserList = ({ users, selectUser }) => {
     <div className="user-list">
       <h2>Users</h2>
       {users.map((user, index) => (
-        <div key={index} className="user-item" onClick={() => selectUser(user.id)}>
-          {user.userName}
+        <div key={index} className="user-item" onClick={() => selectUser(user)}>
+          {user.userName} {/* Display username instead of ID */}
         </div>
       ))}
     </div>
