@@ -76,3 +76,18 @@
   text-align: right;
 }
 
+.unread-badge {
+  background: red;
+  color: white;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 50%;
+  margin-left: 8px;
+}
+.typing-indicator {
+  font-style: italic;
+  color: gray;
+  margin-left: 10px;
+}
+
+
