@@ -3,8 +3,11 @@ import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { fetchData } from "../services/apiService";
 import { endPoint } from "../services/endPoint";
+import Picker from "@emoji-mart/react";  
+import data from "@emoji-mart/data";
 import moment from "moment"; // Import Moment.js
 import "../styles/ChatWindow.css";
+
 
 const ChatWindow = ({ selectedUser, currentUser }) => {
   const [messages, setMessages] = useState([]);
@@ -15,12 +18,18 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
   const messagesEndRef = useRef(null);
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef(null);
+  
 
   useEffect(() => {
     if (!currentUser || !selectedUser) return;
 
     const userId = currentUser.id; // Use user ID directly
-    const socket = new SockJS("http://192.168.78.89:8088/ws");
+    //const socket = new SockJS("http://192.168.78.89:8088/ws");
+    const socket = new SockJS("https://journalapplication-production-29f1.up.railway.app/ws");
+
+    
 
     console.log(`🚀 Connecting to WebSocket as ${currentUser.userName}...`);
 
@@ -222,10 +231,33 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     }
   };
 
+   // Function to handle emoji selection
+  const addEmoji = (emoji) => {
+    setMessage((prevMessage) => prevMessage + emoji.native);
+    setShowEmojiPicker(false); // Close picker after selecting an emoji
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target) &&
+        event.target.id !== "emoji-button"
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="chat-window">
       {/* 🔥 Show the selected user's name on top */}
-      <h3>Chat with {selectedUser?.userName || "Select a user"}</h3>
+      <h3>Chat with {selectedUser?.firstName || "Select a user"}</h3>
 
       {error && <div className="error-message">{error}</div>}
       {/* 🟢 Show typing indicator if the selected user is typing */}
@@ -259,7 +291,22 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         <div ref={messagesEndRef} />
       </div>
 
+
+      
       <div className="input-box">
+      <div className="input-box">
+        {/* Emoji Button */}
+        <button id="emoji-button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
+          😀
+        </button>
+
+        {/* Emoji Picker Component */}
+        {showEmojiPicker && (
+          <div className="emoji-picker" ref={emojiPickerRef}>
+            <Picker data={data} onEmojiSelect={addEmoji} />
+          </div>
+        )}
+         </div>
         <input
           type="text"
           value={message}
