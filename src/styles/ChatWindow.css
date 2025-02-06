@@ -15,7 +15,7 @@
   flex-direction: column;
   overflow-y: auto; /* 🔥 Enables scrolling */
   padding: 10px;
-  max-height: 400px; /* Set a max-height to trigger scrolling */
+  max-height: 100vh; /* Set a max-height to trigger scrolling */
 }
 
 .input-box {
@@ -88,6 +88,15 @@
   font-style: italic;
   color: gray;
   margin-left: 10px;
+}
+.emoji-picker {
+  position: absolute;
+  bottom: 60px;
+  left: 10px;
+  z-index: 100;
+}
+.max-width {
+   width: 100%;
 }
 
 

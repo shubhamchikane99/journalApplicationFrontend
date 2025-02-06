@@ -8,7 +8,7 @@ import "../styles/Chat.css";
 // Function to fetch users
 const fetchUsersData = async (setUsers, setError) => {
   try {
-    const data = await fetchData(endPoint.public + "/get-all");
+    const data = await fetchData(endPoint.users + "/get-all");
 
     if (data.error || data.data.error) {
       setError(data.data.errorMessage || "Failed to fetch users.");

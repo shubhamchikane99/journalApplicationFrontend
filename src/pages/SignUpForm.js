@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { fetchData } from "../services/apiService";
 import { endPoint } from "../services/endPoint";
+import { postData } from "../services/apiService";
 import { useNavigate } from "react-router-dom";
 import "../styles/SignUpForm.css";
 
 const SignUpForm = () => {
+  const [firstName, setFirstname] = useState("");
+  const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -95,19 +98,36 @@ const SignUpForm = () => {
     }
 
     setLoading(true);
+
+    const userPayload = {
+      firstName : firstName,
+      lastName : lastName,
+      userName: username, 
+      password: password, 
+      email: email,
+      sentimentAnalysis: 1,
+      accessRole : [
+        {
+          accessRoleName : "ADMIN"
+        }
+      ] 
+    };
+
     try {
       // Simulate sign-up API response
-      const data = { success: true };
 
-      if (data.success) {
-        alert("Account created successfully!");
+      const data = await postData(endPoint.public + "/create-user" , userPayload);
+
+      console.log("log " + JSON.stringify(data))
+      if (data.data.statusCode===200) {
+        alert(data.data.errorMessage);
         setUsername("");
         setPassword("");
         setConfirmPassword("");
         setOtp("");
         navigate("/"); // Redirect to login
       } else {
-        setError(data.message || "Something went wrong.");
+        alert(data.data.errorMessage)
       }
     } catch (err) {
       setError("Failed to create account. Please try again.");
@@ -122,6 +142,26 @@ const SignUpForm = () => {
       {error && <p className="error">{error}</p>}
 
       <form onSubmit={handleSubmit}>
+      <div>
+          <label htmlFor="firstName">First Name:</label>
+          <input
+            type="text"
+            id="firstName"
+            value={firstName}
+            onChange={(e) => setFirstname(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="lastName">Last Name:</label>
+          <input
+            type="text"
+            id="lastName"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+          />
+        </div>
         <div>
           <label htmlFor="username">Username:</label>
           <input

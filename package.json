@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@emoji-mart/data": "^1.2.1",
+    "@emoji-mart/react": "^1.1.1",
     "@stomp/stompjs": "^7.0.0",
     "axios": "^1.7.9",
     "express": "^4.21.2",
