@@ -86,7 +86,7 @@
 }
 .typing-indicator {
   font-style: italic;
-  color: gray;
+  color: orange;
   margin-left: 10px;
 }
 .emoji-picker {
