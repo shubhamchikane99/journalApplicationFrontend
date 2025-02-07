@@ -26,10 +26,8 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     if (!currentUser || !selectedUser) return;
 
     const userId = currentUser.id; // Use user ID directly
-    //const socket = new SockJS("http://192.168.78.89:8088/ws");
-    const socket = new SockJS("https://journalapplication-production-29f1.up.railway.app/ws");
-
-    
+    const socket = new SockJS("http://192.168.78.89:8088/ws");
+    //const socket = new SockJS("https://journalapplication-production-29f1.up.railway.app/ws");
 
     console.log(`🚀 Connecting to WebSocket as ${currentUser.userName}...`);
 
@@ -47,13 +45,22 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
 
         client.subscribe(userPrivateDestination, (message) => {
           const receivedMessage = JSON.parse(message.body);
-          console.log(
-            `📩 Received private message for ${currentUser.userName}:`,
-            receivedMessage
-          );
 
-          setMessages((prevMessages) => [...prevMessages, receivedMessage]);
-        });
+            // ✅ Only add messages related to the currently selected chat
+            if (
+              (receivedMessage.senderId === selectedUser.id &&
+                receivedMessage.receiverId === currentUser.id) ||
+              (receivedMessage.senderId === currentUser.id &&
+                receivedMessage.receiverId === selectedUser.id)
+            ) {
+              setMessages((prevMessages) => [...prevMessages, receivedMessage]);
+            } else {
+              console.warn(
+                "🚨 Message ignored: Not for the current chat window",
+                receivedMessage
+              );
+            }
+          });
       },
       onDisconnect: () => {
         console.log("❌ Disconnected from WebSocket");
@@ -91,8 +98,17 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
           return;
         }
 
-        console.log("Fetched messages:", response.data);
-        setMessages(response.data); // Set the messages correctly as an array
+
+         const filteredMessages = response.data.filter(
+          (msg) =>
+            (msg.senderId === currentUser.id &&
+              msg.receiverId === selectedUser.id) ||
+            (msg.senderId === selectedUser.id &&
+              msg.receiverId === currentUser.id)
+        );
+
+        console.log("Fetched messages:", filteredMessages);
+        setMessages(filteredMessages); // Set the messages correctly as an array
       } catch (error) {
         console.error("Error fetching messages:", error);
       }
@@ -173,7 +189,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
   }, [stompClient, selectedUser, currentUser.id, isConnected]);
 
   //typing done
-
   const formatTime = (timestamp) => {
     // Parse the given timestamp with the correct format
     const date = moment(timestamp, "DD-MM-YYYY HH:mm:ss");
@@ -214,8 +229,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         chatMessage
       );
 
-      console.log("chatMessage " + JSON.stringify(chatMessage));
-
       if (stompClient.connected) {
         // Ensure the connection is active before publishing
         stompClient.publish({
@@ -223,8 +236,11 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
           body: JSON.stringify(chatMessage),
         });
 
+       // ✅ Ensure message only appends when chat is active
+       if (selectedUser.id === chatMessage.receiverId) {
         setMessages((prev) => [...prev, chatMessage]);
-        setMessage("");
+      }
+      setMessage("");
       } else {
         setError("Unable to send message. WebSocket not connected.");
       }
