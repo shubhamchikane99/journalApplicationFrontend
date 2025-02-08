@@ -3,11 +3,11 @@ import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { fetchData } from "../services/apiService";
 import { endPoint } from "../services/endPoint";
-import Picker from "@emoji-mart/react";  
+import eventBus from "../utils/eventBus"; // ✅ Import eventBus
+import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import moment from "moment"; // Import Moment.js
 import "../styles/ChatWindow.css";
-
 
 const ChatWindow = ({ selectedUser, currentUser }) => {
   const [messages, setMessages] = useState([]);
@@ -20,7 +20,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
   const typingTimeoutRef = useRef(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef(null);
-  
 
   useEffect(() => {
     if (!currentUser || !selectedUser) return;
@@ -46,21 +45,21 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         client.subscribe(userPrivateDestination, (message) => {
           const receivedMessage = JSON.parse(message.body);
 
-            // ✅ Only add messages related to the currently selected chat
-            if (
-              (receivedMessage.senderId === selectedUser.id &&
-                receivedMessage.receiverId === currentUser.id) ||
-              (receivedMessage.senderId === currentUser.id &&
-                receivedMessage.receiverId === selectedUser.id)
-            ) {
-              setMessages((prevMessages) => [...prevMessages, receivedMessage]);
-            } else {
-              console.warn(
-                "🚨 Message ignored: Not for the current chat window",
-                receivedMessage
-              );
-            }
-          });
+          // ✅ Only add messages related to the currently selected chat
+          if (
+            (receivedMessage.senderId === selectedUser.id &&
+              receivedMessage.receiverId === currentUser.id) ||
+            (receivedMessage.senderId === currentUser.id &&
+              receivedMessage.receiverId === selectedUser.id)
+          ) {
+            setMessages((prevMessages) => [...prevMessages, receivedMessage]);
+          } else {
+            console.warn(
+              "🚨 Message ignored: Not for the current chat window",
+              receivedMessage
+            );
+          }
+        });
       },
       onDisconnect: () => {
         console.log("❌ Disconnected from WebSocket");
@@ -98,8 +97,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
           return;
         }
 
-
-         const filteredMessages = response.data.filter(
+        const filteredMessages = response.data.filter(
           (msg) =>
             (msg.senderId === currentUser.id &&
               msg.receiverId === selectedUser.id) ||
@@ -117,11 +115,11 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     fetchMessages();
   }, [selectedUser, currentUser]); // Re-fetch when user changes
 
-   // Reconnect logic if the WebSocket connection is lost
-   useEffect(() => {
+  // Reconnect logic if the WebSocket connection is lost
+  useEffect(() => {
     if (stompClient && !isConnected) {
       console.log("WebSocket connection lost, attempting to reconnect...");
-      stompClient.activate();  // Reconnect the STOMP client if disconnected
+      stompClient.activate(); // Reconnect the STOMP client if disconnected
     }
   }, [isConnected, stompClient]);
 
@@ -130,24 +128,50 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
   }, [messages]);
 
   //Typing
+  // ✅ Typing function with STOMP connection check
   const handleMessageChange = (event) => {
     setMessage(event.target.value);
 
-    if (stompClient && isConnected) {
-      console.log(`✍️ ${currentUser.userName} is typing...`);
-      stompClient.publish({
-        destination: "/app/typing-status",
-        body: JSON.stringify({
-          senderId: currentUser.id,
-          receiverId: selectedUser.id,
-          isTyping: true, // ✅ Ensure correct property
-        }),
-      });
+    // ❌ Check if STOMP is disconnected before publishing
+    if (!stompClient || !stompClient.connected) {
+      console.error(
+        "❌ STOMP client is not connected! Cannot send typing event."
+      );
+      return; // ✅ Stop execution if STOMP is not connected
+    }
 
-      // Reset typing after 2 seconds
-      clearTimeout(typingTimeoutRef.current);
-      typingTimeoutRef.current = setTimeout(() => {
-        console.log(`⌛ ${currentUser.userName} stopped typing.`);
+    console.log(`✍️ ${currentUser.userName} is typing...`);
+
+    // ✅ Send "User is typing" event to WebSocket (STOMP)
+    stompClient.publish({
+      destination: "/app/typing-status",
+      body: JSON.stringify({
+        senderId: currentUser.id,
+        receiverId: selectedUser.id,
+        isTyping: true,
+      }),
+    });
+
+    // ✅ Emit typing event globally (UserList will update)
+    eventBus.emit("typingStatus", {
+      senderId: currentUser.id,
+      receiverId: selectedUser.id,
+      isTyping: true,
+    });
+
+    console.log(`📤 Typing event emitted from ChatWindow.js`, {
+      senderId: currentUser.id,
+      receiverId: selectedUser.id,
+      isTyping: true,
+    });
+
+    // ✅ Remove typing after 2 seconds of inactivity
+    clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      console.log(`⌛ ${currentUser.userName} stopped typing.`);
+
+      if (stompClient && stompClient.connected) {
+        // ✅ Notify WebSocket (STOMP) to stop typing
         stompClient.publish({
           destination: "/app/typing-status",
           body: JSON.stringify({
@@ -156,8 +180,25 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
             isTyping: false,
           }),
         });
-      }, 2000);
-    }
+      } else {
+        console.error(
+          "❌ STOMP client is disconnected! Cannot send stop-typing event."
+        );
+      }
+
+      // ✅ Emit stop-typing event globally
+      eventBus.emit("typingStatus", {
+        senderId: currentUser.id,
+        receiverId: selectedUser.id,
+        isTyping: false,
+      });
+
+      console.log(`📤 Typing event stopped from ChatWindow.js`, {
+        senderId: currentUser.id,
+        receiverId: selectedUser.id,
+        isTyping: false,
+      });
+    }, 2000);
   };
 
   useEffect(() => {
@@ -171,9 +212,28 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         (message) => {
           const typingData = JSON.parse(message.body);
 
-          if (typingData.senderId === selectedUser.id) {
-            setIsTyping(typingData.isTyping); 
+          // ✅ Ensure typing status is only shown for the active chat
+          if (selectedUser && typingData.senderId === selectedUser.id) {
+            setIsTyping(typingData.isTyping);
           }
+
+          // ✅ Auto-clear typing after 2 seconds
+          clearTimeout(typingTimeoutRef.current);
+          if (typingData.isTyping) {
+            typingTimeoutRef.current = setTimeout(() => {
+              setIsTyping(false);
+              console.log(
+                `⌛ Typing indicator cleared for ${selectedUser?.id}`
+              );
+            }, 2000);
+          }
+
+          // ✅ Emit event to notify UserList.js
+          eventBus.emit("typingStatus", {
+            senderId: typingData.senderId,
+            receiverId: typingData.receiverId,
+            isTyping: typingData.isTyping,
+          });
         }
       );
 
@@ -187,6 +247,10 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
       console.error("❌ STOMP Client not connected!");
     }
   }, [stompClient, selectedUser, currentUser.id, isConnected]);
+
+  useEffect(() => {
+    setIsTyping(false); // ✅ Reset typing indicator when changing chat
+  }, [selectedUser]);
 
   //typing done
   const formatTime = (timestamp) => {
@@ -236,18 +300,36 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
           body: JSON.stringify(chatMessage),
         });
 
-       // ✅ Ensure message only appends when chat is active
-       if (selectedUser.id === chatMessage.receiverId) {
-        setMessages((prev) => [...prev, chatMessage]);
-      }
-      setMessage("");
+        // ✅ Ensure message only appends when chat is active
+        if (selectedUser.id === chatMessage.receiverId) {
+          setMessages((prev) => [...prev, chatMessage]);
+        }
+        setMessage("");
+
+        // ✅ Stop typing immediately when a message is sent
+        clearTimeout(typingTimeoutRef.current);
+
+        stompClient.publish({
+          destination: "/app/typing-status",
+          body: JSON.stringify({
+            senderId: currentUser.id,
+            receiverId: selectedUser.id,
+            isTyping: false,
+          }),
+        });
+
+        eventBus.emit("typingStatus", {
+          senderId: currentUser.id,
+          receiverId: selectedUser.id,
+          isTyping: false,
+        });
       } else {
         setError("Unable to send message. WebSocket not connected.");
       }
     }
   };
 
-   // Function to handle emoji selection
+  // Function to handle emoji selection
   const addEmoji = (emoji) => {
     setMessage((prevMessage) => prevMessage + emoji.native);
     setShowEmojiPicker(false); // Close picker after selecting an emoji
@@ -307,22 +389,23 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         <div ref={messagesEndRef} />
       </div>
 
-
-      
       <div className="input-box">
-      <div className="input-box">
-        {/* Emoji Button */}
-        <button id="emoji-button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
-          😀
-        </button>
+        <div className="input-box">
+          {/* Emoji Button */}
+          <button
+            id="emoji-button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+          >
+            😀
+          </button>
 
-        {/* Emoji Picker Component */}
-        {showEmojiPicker && (
-          <div className="emoji-picker" ref={emojiPickerRef}>
-            <Picker data={data} onEmojiSelect={addEmoji} />
-          </div>
-        )}
-         </div>
+          {/* Emoji Picker Component */}
+          {showEmojiPicker && (
+            <div className="emoji-picker" ref={emojiPickerRef}>
+              <Picker data={data} onEmojiSelect={addEmoji} />
+            </div>
+          )}
+        </div>
         <input
           type="text"
           value={message}
