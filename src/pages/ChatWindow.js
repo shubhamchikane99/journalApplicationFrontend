@@ -39,11 +39,68 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         setIsConnected(true);
         setError(null);
 
+        // ✅ Mark user as online in
+        const markUserOnline = async () => {
+          try {
+            const userStatus = await fetchData(
+              endPoint.chatMessage + `/user-status/${userId}`
+            );
+            console.log("finalDataIs", JSON.stringify(userStatus?.data));
+
+            if (userStatus?.data === 0) {
+              await fetchData(endPoint.chatMessage + `/${userId}/online`);
+            }
+          } catch (error) {
+            console.error("Error marking user online:", error);
+          }
+        };
+        markUserOnline(); // ✅ Call the async function here
+
+        // ✅ Fetch delivered messages
+        const fetchDeliveredMessages = async () => {
+          try {
+            const response = await fetchData(
+              endPoint.chatMessage + `/update-delivered-status/${userId}`
+            );
+            const deliveredMessages = response.data; // Expecting an array
+
+            if (Array.isArray(deliveredMessages)) {
+              // Filter messages that belong to the current chat
+              const filteredMessages = deliveredMessages.filter(
+                (msg) =>
+                  (msg.senderId === selectedUser.id &&
+                    msg.receiverId === currentUser.id) ||
+                  (msg.senderId === currentUser.id &&
+                    msg.receiverId === selectedUser.id)
+              );
+
+              if (filteredMessages.length > 0) {
+                console.log("✅ Updating chat with delivered messages...");
+
+                // Set state properly by merging existing and new messages
+                setMessages((prevMessages) => [
+                  ...prevMessages,
+                  ...filteredMessages,
+                ]);
+              } else {
+                console.log("⚠️ No new messages for this chat.");
+              }
+            } else {
+              console.warn("🚨 Unexpected response format:", deliveredMessages);
+            }
+          } catch (error) {
+            console.error("Error fetching delivered messages:", error);
+          }
+        };
+        fetchDeliveredMessages();
+
         const userPrivateDestination = `/user/${userId}/private`;
         console.log(`🔗 Subscribing to: ${userPrivateDestination}`);
 
         client.subscribe(userPrivateDestination, (message) => {
           const receivedMessage = JSON.parse(message.body);
+
+          console.log("Received Messages " + receivedMessage);
 
           // ✅ Only add messages related to the currently selected chat
           if (
@@ -52,7 +109,15 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
             (receivedMessage.senderId === currentUser.id &&
               receivedMessage.receiverId === selectedUser.id)
           ) {
-            setMessages((prevMessages) => [...prevMessages, receivedMessage]);
+            //setMessages((prevMessages) => [...prevMessages, receivedMessage]);
+            setMessages((prevMessages) => {
+              const isAlreadyInState = prevMessages.some(
+                (msg) => msg.id === receivedMessage.id
+              );
+              return isAlreadyInState
+                ? prevMessages
+                : [...prevMessages, receivedMessage];
+            });
           } else {
             console.warn(
               "🚨 Message ignored: Not for the current chat window",
@@ -60,11 +125,28 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
             );
           }
         });
+
+        // ✅ Subscribe to message delivery updates
+        const deliveryUpdateDestination = `/user/${userId}/message-delivery`;
+        client.subscribe(deliveryUpdateDestination, (message) => {
+          const deliveredMessage = JSON.parse(message.body);
+          setMessages((prevMessages) =>
+            prevMessages.map((msg) =>
+              msg.id === deliveredMessage.id
+                ? { ...msg, status: "DELIVERED" }
+                : msg
+            )
+          );
+        });
       },
+
       onDisconnect: () => {
         console.log("❌ Disconnected from WebSocket");
         setIsConnected(false);
         setError("Disconnected. Reconnecting...");
+
+        // 🔴 Mark user as offline in DB
+        fetchData(endPoint.chatMessage`/${userId}/offline`);
       },
       onStompError: (frame) => {
         console.error("❌ STOMP Error:", frame.headers["message"]);
@@ -74,6 +156,12 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
 
     client.activate();
     setStompClient(client);
+
+    // 🔴 Detect Tab Close or Refresh (Mark User Offline)
+    const handleBeforeUnload = () => {
+      fetchData(endPoint.chatMessage + `/${userId}/offline`);
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
       if (client) {
@@ -104,8 +192,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
             (msg.senderId === selectedUser.id &&
               msg.receiverId === currentUser.id)
         );
-
-        console.log("Fetched messages:", filteredMessages);
         setMessages(filteredMessages); // Set the messages correctly as an array
       } catch (error) {
         console.error("Error fetching messages:", error);
@@ -285,6 +371,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         senderId: currentUser.id, // Ensure correct sender ID
         receiverId: selectedUser.id, // Ensure correct receiver ID
         content: message,
+        status: "SENT",
         insertDateTime: formattedDate, // Add timestamp
       };
 
@@ -305,6 +392,34 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
           setMessages((prev) => [...prev, chatMessage]);
         }
         setMessage("");
+
+        try {
+          // ✅ Fetch the latest message after sending
+          const response = await fetchData(
+            endPoint.chatMessage +
+              `/messages/${currentUser.id}/${selectedUser.id}`
+          );
+
+          if (response.error || response.data?.error) {
+            console.error(
+              "Error fetching latest message:",
+              response.data?.errorMessage
+            );
+            return;
+          }
+
+          // ✅ Update state with the latest message
+          const filteredMessages = response.data.filter(
+            (msg) =>
+              (msg.senderId === currentUser.id &&
+                msg.receiverId === selectedUser.id) ||
+              (msg.senderId === selectedUser.id &&
+                msg.receiverId === currentUser.id)
+          );
+          setMessages(filteredMessages);
+        } catch (error) {
+          console.error("Error fetching latest message:", error);
+        }
 
         // ✅ Stop typing immediately when a message is sent
         clearTimeout(typingTimeoutRef.current);
@@ -383,7 +498,16 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
               {msg.senderId === currentUser.id ? "You" : selectedUser.userName}:
             </b>{" "}
             {msg.content}
-            <div className="message-time">{formatTime(msg.insertDateTime)}</div>
+            <div className="message-time">
+              {formatTime(msg.insertDateTime)}
+              {msg.senderId === currentUser.id && msg.status === "SENT" && " ✓"}
+              {msg.senderId === currentUser.id &&
+                msg.status === "DELIVERED" &&
+                " ✓✓"}
+              {msg.senderId === currentUser.id &&
+                msg.status === "SEEN" &&
+                " 👀"}
+            </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
