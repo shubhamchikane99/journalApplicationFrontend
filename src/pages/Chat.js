@@ -16,7 +16,6 @@ const fetchUsersData = async (setUsers, setError) => {
     }
 
     if (data.data && Array.isArray(data.data)) {
-      console.log("✅ Fetched users:", data.data);
       setUsers(data.data); // Set the fetched users
     }
   } catch (err) {
@@ -36,7 +35,6 @@ const Chat = () => {
 
     // Get the logged-in user from local storage (from login)
     const loggedInUser = JSON.parse(localStorage.getItem("user")); // Make sure to parse JSON
-    console.log("✅ Logged-in User:", loggedInUser);
 
     if (loggedInUser) {
       setCurrentUser(loggedInUser);

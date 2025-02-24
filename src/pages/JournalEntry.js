@@ -25,14 +25,10 @@ const JournalEntry = () => {
       // Send the journal entry to the server
       const data = await postData(endPoint.saveJournal,JournalEntryPlayLoad);
 
-      console.log("Saved Journal Entry:", data);
-
       if (data.error || data.data.error) {
         setError(data.data.errorMessage || "Failed to save journal entry.");
         return;
       }
-
-      console.log("(data.data.error " + data.error)
 
       if (!data.error && data.data) {
         alert("Journal Entry Saved Successfully!");

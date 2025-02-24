@@ -25,7 +25,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     if (!currentUser || !selectedUser) return;
 
     const userId = currentUser.id; // Use user ID directly
-    const socket = new SockJS("http://192.168.78.89:8088/ws");
+    const socket = new SockJS("http://192.168.245.89:8088/ws");
     //const socket = new SockJS("https://journalapplication-production-29f1.up.railway.app/ws");
 
     console.log(`🚀 Connecting to WebSocket as ${currentUser.userName}...`);
@@ -45,8 +45,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
             const userStatus = await fetchData(
               endPoint.chatMessage + `/user-status/${userId}`
             );
-            console.log("finalDataIs", JSON.stringify(userStatus?.data));
-
             if (userStatus?.data === 0) {
               await fetchData(endPoint.chatMessage + `/${userId}/online`);
             }
@@ -55,44 +53,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
           }
         };
         markUserOnline(); // ✅ Call the async function here
-
-        // ✅ Fetch delivered messages
-        const fetchDeliveredMessages = async () => {
-          try {
-            const response = await fetchData(
-              endPoint.chatMessage + `/update-delivered-status/${userId}`
-            );
-            const deliveredMessages = response.data; // Expecting an array
-
-            if (Array.isArray(deliveredMessages)) {
-              // Filter messages that belong to the current chat
-              const filteredMessages = deliveredMessages.filter(
-                (msg) =>
-                  (msg.senderId === selectedUser.id &&
-                    msg.receiverId === currentUser.id) ||
-                  (msg.senderId === currentUser.id &&
-                    msg.receiverId === selectedUser.id)
-              );
-
-              if (filteredMessages.length > 0) {
-                console.log("✅ Updating chat with delivered messages...");
-
-                // Set state properly by merging existing and new messages
-                setMessages((prevMessages) => [
-                  ...prevMessages,
-                  ...filteredMessages,
-                ]);
-              } else {
-                console.log("⚠️ No new messages for this chat.");
-              }
-            } else {
-              console.warn("🚨 Unexpected response format:", deliveredMessages);
-            }
-          } catch (error) {
-            console.error("Error fetching delivered messages:", error);
-          }
-        };
-        fetchDeliveredMessages();
 
         const userPrivateDestination = `/user/${userId}/private`;
         console.log(`🔗 Subscribing to: ${userPrivateDestination}`);
@@ -126,17 +86,20 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
           }
         });
 
-        // ✅ Subscribe to message delivery updates
-        const deliveryUpdateDestination = `/user/${userId}/message-delivery`;
-        client.subscribe(deliveryUpdateDestination, (message) => {
-          const deliveredMessage = JSON.parse(message.body);
-          setMessages((prevMessages) =>
-            prevMessages.map((msg) =>
-              msg.id === deliveredMessage.id
-                ? { ...msg, status: "DELIVERED" }
-                : msg
-            )
-          );
+        client.subscribe(`/user/${userId}/message-delivery`, (message) => {
+          const deliveryStatus = JSON.parse(message.body);
+          setMessages((prevMessages) => {
+            const updatedMessages = prevMessages.map((msg) => {
+              if (
+                msg.id === deliveryStatus.id &&
+                msg.status !== deliveryStatus.status
+              ) {
+                return { ...msg, status: deliveryStatus.status };
+              }
+              return msg;
+            });
+            return [...updatedMessages]; // ✅ Ensure a new array is returned to trigger re-render
+          });
         });
       },
 
@@ -447,7 +410,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
   // Function to handle emoji selection
   const addEmoji = (emoji) => {
     setMessage((prevMessage) => prevMessage + emoji.native);
-    setShowEmojiPicker(false); // Close picker after selecting an emoji
+    setShowEmojiPicker(true); // Close picker after selecting an emoji
   };
 
   useEffect(() => {
