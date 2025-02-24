@@ -28,14 +28,11 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     const socket = new SockJS("http://192.168.245.89:8088/ws");
     //const socket = new SockJS("https://journalapplication-production-29f1.up.railway.app/ws");
 
-    console.log(`🚀 Connecting to WebSocket as ${currentUser.userName}...`);
-
     const client = new Client({
       webSocketFactory: () => socket,
-      debug: (str) => console.log("STOMP Debug:", str),
+      debug: (str) =>  str,
       reconnectDelay: 5000,
       onConnect: () => {
-        console.log(`✅ Connected to WebSocket as ${userId}`);
         setIsConnected(true);
         setError(null);
 
@@ -54,14 +51,14 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         };
         markUserOnline(); // ✅ Call the async function here
 
+        // ✅ **Immediately call API to mark messages as SEEN**
+        fetchData(
+          endPoint.chatMessage +
+            `/mark-seen/${currentUser.id}/${selectedUser.id}`
+        )
         const userPrivateDestination = `/user/${userId}/private`;
-        console.log(`🔗 Subscribing to: ${userPrivateDestination}`);
-
         client.subscribe(userPrivateDestination, (message) => {
           const receivedMessage = JSON.parse(message.body);
-
-          console.log("Received Messages " + receivedMessage);
-
           // ✅ Only add messages related to the currently selected chat
           if (
             (receivedMessage.senderId === selectedUser.id &&
@@ -78,6 +75,25 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
                 ? prevMessages
                 : [...prevMessages, receivedMessage];
             });
+            // ✅ **Mark newly received messages as SEEN instantly**
+            if (
+              receivedMessage.senderId === selectedUser.id &&
+              receivedMessage.receiverId === currentUser.id
+            ) {
+              setMessages((prevMessages) =>
+                prevMessages.map((msg) =>
+                  msg.id === receivedMessage.id
+                    ? { ...msg, status: "SEEN" }
+                    : msg
+                )
+              );
+
+              // ✅ **Call API to mark it as seen in DB**
+              fetchData(
+                endPoint.chatMessage +
+                  `/mark-seen/${currentUser.id}/${selectedUser.id}`
+              )
+            }
           } else {
             console.warn(
               "🚨 Message ignored: Not for the current chat window",
@@ -104,7 +120,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
       },
 
       onDisconnect: () => {
-        console.log("❌ Disconnected from WebSocket");
         setIsConnected(false);
         setError("Disconnected. Reconnecting...");
 
@@ -167,7 +182,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
   // Reconnect logic if the WebSocket connection is lost
   useEffect(() => {
     if (stompClient && !isConnected) {
-      console.log("WebSocket connection lost, attempting to reconnect...");
+
       stompClient.activate(); // Reconnect the STOMP client if disconnected
     }
   }, [isConnected, stompClient]);
@@ -189,8 +204,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
       return; // ✅ Stop execution if STOMP is not connected
     }
 
-    console.log(`✍️ ${currentUser.userName} is typing...`);
-
     // ✅ Send "User is typing" event to WebSocket (STOMP)
     stompClient.publish({
       destination: "/app/typing-status",
@@ -208,17 +221,9 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
       isTyping: true,
     });
 
-    console.log(`📤 Typing event emitted from ChatWindow.js`, {
-      senderId: currentUser.id,
-      receiverId: selectedUser.id,
-      isTyping: true,
-    });
-
     // ✅ Remove typing after 2 seconds of inactivity
     clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
-      console.log(`⌛ ${currentUser.userName} stopped typing.`);
-
       if (stompClient && stompClient.connected) {
         // ✅ Notify WebSocket (STOMP) to stop typing
         stompClient.publish({
@@ -241,19 +246,11 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         receiverId: selectedUser.id,
         isTyping: false,
       });
-
-      console.log(`📤 Typing event stopped from ChatWindow.js`, {
-        senderId: currentUser.id,
-        receiverId: selectedUser.id,
-        isTyping: false,
-      });
     }, 2000);
   };
 
   useEffect(() => {
     if (!stompClient || !isConnected || !selectedUser) return;
-
-    console.log(`🟢 Subscribing to typing status for user ${currentUser.id}`);
 
     if (stompClient.connected) {
       const subscription = stompClient.subscribe(
@@ -271,9 +268,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
           if (typingData.isTyping) {
             typingTimeoutRef.current = setTimeout(() => {
               setIsTyping(false);
-              console.log(
-                `⌛ Typing indicator cleared for ${selectedUser?.id}`
-              );
             }, 2000);
           }
 
@@ -287,9 +281,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
       );
 
       return () => {
-        console.log(
-          `🔴 Unsubscribing from typing status for user ${currentUser.id}`
-        );
+      
         subscription.unsubscribe();
       };
     } else {
@@ -337,11 +329,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         status: "SENT",
         insertDateTime: formattedDate, // Add timestamp
       };
-
-      console.log(
-        `📤 Sending message from ${currentUser.userName} to ${selectedUser.userName}:`,
-        chatMessage
-      );
 
       if (stompClient.connected) {
         // Ensure the connection is active before publishing
@@ -439,10 +426,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
       {/* 🟢 Show typing indicator if the selected user is typing */}
       {isTyping && (
         <>
-          {console.log(
-            "📝 UI: Showing typing status for",
-            selectedUser?.userName
-          )}
           <p className="typing-indicator">
             {selectedUser?.userName} is typing...
           </p>
