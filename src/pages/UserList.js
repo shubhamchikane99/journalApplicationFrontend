@@ -8,8 +8,7 @@ const UserList = ({ users, selectUser }) => {
   useEffect(() => {
     // ✅ Listen for typing events globally
     const handleTypingStatus = ({ senderId, receiverId, isTyping }) => {
-      console.log(`📩 Typing event received in UserList.js:`, { senderId, isTyping });
-
+    
       setTypingUsers((prev) => ({
         ...prev,
         [senderId]: isTyping, // ✅ Always update typing status
@@ -23,7 +22,6 @@ const UserList = ({ users, selectUser }) => {
     };
   }, []);
 
-  console.log("🔥 Current typing users: ", typingUsers);
 
   return (
     <div className="user-list">

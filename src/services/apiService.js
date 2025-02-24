@@ -8,18 +8,11 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    // const username = process.env.REACT_APP_API_USERNAME;  
-    // const password = process.env.REACT_APP_API_PASSWORD;  
+    // const username = process.env.REACT_APP_API_USERNAME;
+    // const password = process.env.REACT_APP_API_PASSWORD;
 
-    
-    const username =  localStorage.getItem("userId"); // Retrieve username
-    const password =  localStorage.getItem("userPassword"); // Retrieve password
-
-    const additionalData =   JSON.parse(localStorage.getItem("user"));
-
-  console.log("additionalData " + additionalData)
-    console.log("username" , username)
-    console.log("pass ", password)
+    const username = localStorage.getItem("userId"); // Retrieve username
+    const password = localStorage.getItem("userPassword"); // Retrieve password
 
     if (username && password) {
       const encodedCredentials = btoa(`${username}:${password}`);
@@ -30,7 +23,6 @@ api.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-
 
 // Fetch data from a specific endpoint
 export const fetchData = async (endpoint) => {

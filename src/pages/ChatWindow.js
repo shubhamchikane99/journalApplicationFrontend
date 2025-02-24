@@ -25,26 +25,40 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     if (!currentUser || !selectedUser) return;
 
     const userId = currentUser.id; // Use user ID directly
-    const socket = new SockJS("http://192.168.78.89:8088/ws");
+    const socket = new SockJS("http://192.168.245.89:8088/ws");
     //const socket = new SockJS("https://journalapplication-production-29f1.up.railway.app/ws");
-
-    console.log(`🚀 Connecting to WebSocket as ${currentUser.userName}...`);
 
     const client = new Client({
       webSocketFactory: () => socket,
-      debug: (str) => console.log("STOMP Debug:", str),
+      debug: (str) =>  str,
       reconnectDelay: 5000,
       onConnect: () => {
-        console.log(`✅ Connected to WebSocket as ${userId}`);
         setIsConnected(true);
         setError(null);
 
-        const userPrivateDestination = `/user/${userId}/private`;
-        console.log(`🔗 Subscribing to: ${userPrivateDestination}`);
+        // ✅ Mark user as online in
+        const markUserOnline = async () => {
+          try {
+            const userStatus = await fetchData(
+              endPoint.chatMessage + `/user-status/${userId}`
+            );
+            if (userStatus?.data === 0) {
+              await fetchData(endPoint.chatMessage + `/${userId}/online`);
+            }
+          } catch (error) {
+            console.error("Error marking user online:", error);
+          }
+        };
+        markUserOnline(); // ✅ Call the async function here
 
+        // ✅ **Immediately call API to mark messages as SEEN**
+        fetchData(
+          endPoint.chatMessage +
+            `/mark-seen/${currentUser.id}/${selectedUser.id}`
+        )
+        const userPrivateDestination = `/user/${userId}/private`;
         client.subscribe(userPrivateDestination, (message) => {
           const receivedMessage = JSON.parse(message.body);
-
           // ✅ Only add messages related to the currently selected chat
           if (
             (receivedMessage.senderId === selectedUser.id &&
@@ -52,7 +66,34 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
             (receivedMessage.senderId === currentUser.id &&
               receivedMessage.receiverId === selectedUser.id)
           ) {
-            setMessages((prevMessages) => [...prevMessages, receivedMessage]);
+            //setMessages((prevMessages) => [...prevMessages, receivedMessage]);
+            setMessages((prevMessages) => {
+              const isAlreadyInState = prevMessages.some(
+                (msg) => msg.id === receivedMessage.id
+              );
+              return isAlreadyInState
+                ? prevMessages
+                : [...prevMessages, receivedMessage];
+            });
+            // ✅ **Mark newly received messages as SEEN instantly**
+            if (
+              receivedMessage.senderId === selectedUser.id &&
+              receivedMessage.receiverId === currentUser.id
+            ) {
+              setMessages((prevMessages) =>
+                prevMessages.map((msg) =>
+                  msg.id === receivedMessage.id
+                    ? { ...msg, status: "SEEN" }
+                    : msg
+                )
+              );
+
+              // ✅ **Call API to mark it as seen in DB**
+              fetchData(
+                endPoint.chatMessage +
+                  `/mark-seen/${currentUser.id}/${selectedUser.id}`
+              )
+            }
           } else {
             console.warn(
               "🚨 Message ignored: Not for the current chat window",
@@ -60,11 +101,30 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
             );
           }
         });
+
+        client.subscribe(`/user/${userId}/message-delivery`, (message) => {
+          const deliveryStatus = JSON.parse(message.body);
+          setMessages((prevMessages) => {
+            const updatedMessages = prevMessages.map((msg) => {
+              if (
+                msg.id === deliveryStatus.id &&
+                msg.status !== deliveryStatus.status
+              ) {
+                return { ...msg, status: deliveryStatus.status };
+              }
+              return msg;
+            });
+            return [...updatedMessages]; // ✅ Ensure a new array is returned to trigger re-render
+          });
+        });
       },
+
       onDisconnect: () => {
-        console.log("❌ Disconnected from WebSocket");
         setIsConnected(false);
         setError("Disconnected. Reconnecting...");
+
+        // 🔴 Mark user as offline in DB
+        fetchData(endPoint.chatMessage`/${userId}/offline`);
       },
       onStompError: (frame) => {
         console.error("❌ STOMP Error:", frame.headers["message"]);
@@ -74,6 +134,12 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
 
     client.activate();
     setStompClient(client);
+
+    // 🔴 Detect Tab Close or Refresh (Mark User Offline)
+    const handleBeforeUnload = () => {
+      fetchData(endPoint.chatMessage + `/${userId}/offline`);
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
       if (client) {
@@ -104,8 +170,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
             (msg.senderId === selectedUser.id &&
               msg.receiverId === currentUser.id)
         );
-
-        console.log("Fetched messages:", filteredMessages);
         setMessages(filteredMessages); // Set the messages correctly as an array
       } catch (error) {
         console.error("Error fetching messages:", error);
@@ -118,7 +182,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
   // Reconnect logic if the WebSocket connection is lost
   useEffect(() => {
     if (stompClient && !isConnected) {
-      console.log("WebSocket connection lost, attempting to reconnect...");
+
       stompClient.activate(); // Reconnect the STOMP client if disconnected
     }
   }, [isConnected, stompClient]);
@@ -140,8 +204,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
       return; // ✅ Stop execution if STOMP is not connected
     }
 
-    console.log(`✍️ ${currentUser.userName} is typing...`);
-
     // ✅ Send "User is typing" event to WebSocket (STOMP)
     stompClient.publish({
       destination: "/app/typing-status",
@@ -159,17 +221,9 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
       isTyping: true,
     });
 
-    console.log(`📤 Typing event emitted from ChatWindow.js`, {
-      senderId: currentUser.id,
-      receiverId: selectedUser.id,
-      isTyping: true,
-    });
-
     // ✅ Remove typing after 2 seconds of inactivity
     clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
-      console.log(`⌛ ${currentUser.userName} stopped typing.`);
-
       if (stompClient && stompClient.connected) {
         // ✅ Notify WebSocket (STOMP) to stop typing
         stompClient.publish({
@@ -192,19 +246,11 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         receiverId: selectedUser.id,
         isTyping: false,
       });
-
-      console.log(`📤 Typing event stopped from ChatWindow.js`, {
-        senderId: currentUser.id,
-        receiverId: selectedUser.id,
-        isTyping: false,
-      });
     }, 2000);
   };
 
   useEffect(() => {
     if (!stompClient || !isConnected || !selectedUser) return;
-
-    console.log(`🟢 Subscribing to typing status for user ${currentUser.id}`);
 
     if (stompClient.connected) {
       const subscription = stompClient.subscribe(
@@ -222,9 +268,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
           if (typingData.isTyping) {
             typingTimeoutRef.current = setTimeout(() => {
               setIsTyping(false);
-              console.log(
-                `⌛ Typing indicator cleared for ${selectedUser?.id}`
-              );
             }, 2000);
           }
 
@@ -238,9 +281,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
       );
 
       return () => {
-        console.log(
-          `🔴 Unsubscribing from typing status for user ${currentUser.id}`
-        );
+      
         subscription.unsubscribe();
       };
     } else {
@@ -285,13 +326,9 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         senderId: currentUser.id, // Ensure correct sender ID
         receiverId: selectedUser.id, // Ensure correct receiver ID
         content: message,
+        status: "SENT",
         insertDateTime: formattedDate, // Add timestamp
       };
-
-      console.log(
-        `📤 Sending message from ${currentUser.userName} to ${selectedUser.userName}:`,
-        chatMessage
-      );
 
       if (stompClient.connected) {
         // Ensure the connection is active before publishing
@@ -305,6 +342,34 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
           setMessages((prev) => [...prev, chatMessage]);
         }
         setMessage("");
+
+        try {
+          // ✅ Fetch the latest message after sending
+          const response = await fetchData(
+            endPoint.chatMessage +
+              `/messages/${currentUser.id}/${selectedUser.id}`
+          );
+
+          if (response.error || response.data?.error) {
+            console.error(
+              "Error fetching latest message:",
+              response.data?.errorMessage
+            );
+            return;
+          }
+
+          // ✅ Update state with the latest message
+          const filteredMessages = response.data.filter(
+            (msg) =>
+              (msg.senderId === currentUser.id &&
+                msg.receiverId === selectedUser.id) ||
+              (msg.senderId === selectedUser.id &&
+                msg.receiverId === currentUser.id)
+          );
+          setMessages(filteredMessages);
+        } catch (error) {
+          console.error("Error fetching latest message:", error);
+        }
 
         // ✅ Stop typing immediately when a message is sent
         clearTimeout(typingTimeoutRef.current);
@@ -332,7 +397,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
   // Function to handle emoji selection
   const addEmoji = (emoji) => {
     setMessage((prevMessage) => prevMessage + emoji.native);
-    setShowEmojiPicker(false); // Close picker after selecting an emoji
+    setShowEmojiPicker(true); // Close picker after selecting an emoji
   };
 
   useEffect(() => {
@@ -361,10 +426,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
       {/* 🟢 Show typing indicator if the selected user is typing */}
       {isTyping && (
         <>
-          {console.log(
-            "📝 UI: Showing typing status for",
-            selectedUser?.userName
-          )}
           <p className="typing-indicator">
             {selectedUser?.userName} is typing...
           </p>
@@ -383,7 +444,16 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
               {msg.senderId === currentUser.id ? "You" : selectedUser.userName}:
             </b>{" "}
             {msg.content}
-            <div className="message-time">{formatTime(msg.insertDateTime)}</div>
+            <div className="message-time">
+              {formatTime(msg.insertDateTime)}
+              {msg.senderId === currentUser.id && msg.status === "SENT" && " ✓"}
+              {msg.senderId === currentUser.id &&
+                msg.status === "DELIVERED" &&
+                " ✓✓"}
+              {msg.senderId === currentUser.id &&
+                msg.status === "SEEN" &&
+                " 👀"}
+            </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
