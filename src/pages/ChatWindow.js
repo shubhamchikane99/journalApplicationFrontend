@@ -25,8 +25,8 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     if (!currentUser || !selectedUser) return;
 
     const userId = currentUser.id; // Use user ID directly
-    const socket = new SockJS("http://192.168.245.89:8088/ws");
-    //const socket = new SockJS("https://journalapplication-production-29f1.up.railway.app/ws");
+    //const socket = new SockJS("http://192.168.245.89:8088/ws");
+    const socket = new SockJS("https://journalapplication-production-29f1.up.railway.app/ws");
 
     const client = new Client({
       webSocketFactory: () => socket,
