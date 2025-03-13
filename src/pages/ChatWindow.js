@@ -25,7 +25,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     if (!currentUser || !selectedUser) return;
 
     const userId = currentUser.id; // Use user ID directly
-    //const socket = new SockJS("http://192.168.245.89:8088/ws");
+   // const socket = new SockJS("http://192.168.165.89:8088/ws");
     const socket = new SockJS("https://journalapplication-production-5799.up.railway.app/ws");
 
     const client = new Client({
@@ -417,6 +417,16 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     };
   }, []);
 
+  //inputbox
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault(); // Prevent new line
+      sendMessage();
+    }
+  };
+
+
+
   return (
     <div className="chat-window">
       {/* 🔥 Show the selected user's name on top */}
@@ -480,6 +490,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
           type="text"
           value={message}
           onChange={handleMessageChange}
+          onKeyDown={handleKeyDown}
           placeholder="Type a message..."
         />
         <button onClick={sendMessage} disabled={!isConnected}>
