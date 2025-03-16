@@ -7,6 +7,7 @@ import eventBus from "../utils/eventBus"; // ✅ Import eventBus
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import moment from "moment"; // Import Moment.js
+import FileUpload from "../components/FileUpload";
 import "../styles/ChatWindow.css";
 
 const ChatWindow = ({ selectedUser, currentUser }) => {
@@ -20,17 +21,20 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
   const typingTimeoutRef = useRef(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef(null);
+  const [fileUrl, setFileUrl] = useState(null); // Store uploaded file URL
+  const [filePreview, setFilePreview] = useState(null);
+
 
   useEffect(() => {
     if (!currentUser || !selectedUser) return;
 
     const userId = currentUser.id; // Use user ID directly
-   // const socket = new SockJS("http://192.168.165.89:8088/ws");
-    const socket = new SockJS("https://journalapplication-production-5799.up.railway.app/ws");
+    const socket = new SockJS("http://192.168.165.89:8088/ws");
+    //const socket = new SockJS("https://journalapplication-production-5799.up.railway.app/ws");
 
     const client = new Client({
       webSocketFactory: () => socket,
-      debug: (str) =>  str,
+      debug: (str) => str,
       reconnectDelay: 5000,
       onConnect: () => {
         setIsConnected(true);
@@ -55,7 +59,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         fetchData(
           endPoint.chatMessage +
             `/mark-seen/${currentUser.id}/${selectedUser.id}`
-        )
+        );
         const userPrivateDestination = `/user/${userId}/private`;
         client.subscribe(userPrivateDestination, (message) => {
           const receivedMessage = JSON.parse(message.body);
@@ -92,7 +96,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
               fetchData(
                 endPoint.chatMessage +
                   `/mark-seen/${currentUser.id}/${selectedUser.id}`
-              )
+              );
             }
           } else {
             console.warn(
@@ -182,7 +186,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
   // Reconnect logic if the WebSocket connection is lost
   useEffect(() => {
     if (stompClient && !isConnected) {
-
       stompClient.activate(); // Reconnect the STOMP client if disconnected
     }
   }, [isConnected, stompClient]);
@@ -281,7 +284,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
       );
 
       return () => {
-      
         subscription.unsubscribe();
       };
     } else {
@@ -321,11 +323,12 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     const currentDateTime = new Date().toISOString(); // Get current timestamp in ISO format
     const formattedDate = formatDate(currentDateTime);
 
-    if (message.trim() !== "") {
+    if (message.trim() !== "" || fileUrl) {
       const chatMessage = {
         senderId: currentUser.id, // Ensure correct sender ID
         receiverId: selectedUser.id, // Ensure correct receiver ID
-        content: message,
+        content: fileUrl || message, // Use file URL if available,
+        type: fileUrl ? "file" : "text", // Determine type
         status: "SENT",
         insertDateTime: formattedDate, // Add timestamp
       };
@@ -342,6 +345,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
           setMessages((prev) => [...prev, chatMessage]);
         }
         setMessage("");
+        setFileUrl(null);
 
         try {
           // ✅ Fetch the latest message after sending
@@ -425,7 +429,10 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     }
   };
 
-
+  //FileUpload
+  const onUploadSuccess = (url) => {
+    setFileUrl(url);
+  };
 
   return (
     <div className="chat-window">
@@ -433,13 +440,12 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
       <h3>Chat with {selectedUser?.firstName || "Select a user"}</h3>
 
       {error && <div className="error-message">{error}</div>}
+
       {/* 🟢 Show typing indicator if the selected user is typing */}
       {isTyping && (
-        <>
-          <p className="typing-indicator">
-            {selectedUser?.userName} is typing...
-          </p>
-        </>
+        <p className="typing-indicator">
+          {selectedUser?.userName} is typing...
+        </p>
       )}
 
       <div className="messages">
@@ -453,7 +459,15 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
             <b>
               {msg.senderId === currentUser.id ? "You" : selectedUser.userName}:
             </b>{" "}
-            {msg.content}
+            {msg.type === "file" ? (
+              msg.content.endsWith(".mp4") ? (
+                <video src={msg.content} width="200" controls />
+              ) : (
+                <img src={msg.content} width="200" alt="Uploaded" />
+              )
+            ) : (
+              msg.content
+            )}
             <div className="message-time">
               {formatTime(msg.insertDateTime)}
               {msg.senderId === currentUser.id && msg.status === "SENT" && " ✓"}
@@ -469,30 +483,38 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="input-box">
-        <div className="input-box">
-          {/* Emoji Button */}
-          <button
-            id="emoji-button"
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          >
-            😀
-          </button>
+      {/* 📤 File Upload Component */}
 
-          {/* Emoji Picker Component */}
-          {showEmojiPicker && (
-            <div className="emoji-picker" ref={emojiPickerRef}>
-              <Picker data={data} onEmojiSelect={addEmoji} />
-            </div>
-          )}
-        </div>
+      {/* ✍️ Message Input Box */}
+      <div className="input-box">
+        <button
+          id="emoji-button"
+          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+        >
+          😀
+        </button>
+
+        {showEmojiPicker && (
+          <div className="emoji-picker" ref={emojiPickerRef}>
+            <Picker data={data} onEmojiSelect={addEmoji} />
+          </div>
+        )}
+
         <input
           type="text"
-          value={message}
+          value={fileUrl ? `${message} ${fileUrl}` : message}
           onChange={handleMessageChange}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
         />
+        {/* Show uploaded file preview */}
+        {filePreview && (
+          <div className="image-preview">
+            <img src={filePreview} alt="Preview" width="100" />
+            <button onClick={() => setFilePreview(null)}>❌</button>
+          </div>
+        )}
+        <FileUpload onUploadSuccess={onUploadSuccess} />
         <button onClick={sendMessage} disabled={!isConnected}>
           Send
         </button>

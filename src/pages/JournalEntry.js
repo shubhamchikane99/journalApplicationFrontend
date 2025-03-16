@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { postData } from "../services/apiService";
 import moment from "moment"; // Import Moment.js
-import { endPoint } from "../services/endPoint"; // Correct the import statement
+import { endPoint } from "../services/endPoint"; 
 import "../styles/JournalEntry.css"; // Import the CSS file
 
 const JournalEntry = () => {
