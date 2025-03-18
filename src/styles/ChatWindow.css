@@ -1,40 +1,129 @@
+/* Chat Window Container */
 .chat-window {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Adjust as needed */
+  height: 100vh; /* Full height */
   width: 100%;
-  max-width: 1100px; /* Adjust width as needed */
+  max-width: 1100px; /* Limit max width */
   border: 1px solid #ddd;
   border-radius: 10px;
   overflow: hidden;
 }
 
+/* Messages Container (Scrollable) */
 .messages {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto; /* 🔥 Enables scrolling */
+  overflow-y: auto; /* Enables scrolling */
   padding: 10px;
-  max-height: 100vh; /* Set a max-height to trigger scrolling */
+  max-height: 100vh; /* Prevents overflow */
+  scroll-behavior: smooth; /* Smooth scrolling */
 }
 
+/* Input Box */
 .input-box {
   display: flex;
   align-items: center;
+  gap: 10px;
   padding: 10px;
-  border-top: 1px solid #ddd;
   background: #fff;
-}
-
-.input-box input {
-  flex: 1;
   padding: 10px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  margin-right: 10px;
+  border-radius: 10px;
+  border-top: 1px solid #ccc;
+  position: relative;
+  width: 98%;
 }
 
+/* Input Field */
+.input-container {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 16px;
+  border-radius: 5px;
+}
+
+/* Media Preview */
+.media-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f1f1f1;
+  padding: 8px;
+  border-radius: 10px;
+  position: relative;
+  max-width: 220px;
+  min-width: 150px;
+  height: 100px;
+  overflow: hidden;
+}
+
+.media-preview img,
+.media-preview video {
+  max-width: 100px;
+  max-height: 80px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+/* Remove Media Button */
+.remove-media {
+  background: red;
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 14px;
+  border-radius: 50%;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* Hide Elements */
+.hidden {
+  display: none;
+}
+
+/* Emoji Button */
+#emoji-button {
+  font-size: 20px;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+/* Send Button */
+button {
+  padding: 8px 12px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  background: blue;
+  color: white;
+  font-size: 16px;
+}
+
+button:disabled {
+  background: gray;
+}
+
+/* Input Box Button */
 .input-box button {
   width: 50px;
   padding: 8px 10px;
@@ -46,11 +135,7 @@
   border-radius: 5px;
 }
 
-.input-box button:disabled {
-  background: gray;
-  cursor: not-allowed;
-}
-
+/* Messages */
 .my-message {
   align-self: flex-end;
   background-color: #007bff;
@@ -59,6 +144,7 @@
   border-radius: 10px;
   margin: 5px;
   max-width: 60%;
+  word-wrap: break-word;
 }
 
 .other-message {
@@ -68,13 +154,17 @@
   border-radius: 10px;
   margin: 5px;
   max-width: 60%;
+  word-wrap: break-word;
 }
+
+/* Message Timestamp */
 .message-time {
   font-size: 12px;
   margin-top: 5px;
   text-align: right;
 }
 
+/* Unread Message Badge */
 .unread-badge {
   background: red;
   color: white;
@@ -83,19 +173,41 @@
   border-radius: 50%;
   margin-left: 8px;
 }
+
+/* Typing Indicator */
 .typing-indicator {
   font-style: italic;
   color: orange;
   margin-left: 10px;
 }
+
+/* Emoji Picker */
 .emoji-picker {
   position: absolute;
-  bottom: 60px;
+  bottom: 50px;
   left: 10px;
   z-index: 100;
+  background: white;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
+
+/* Responsive Width */
 .max-width {
-   width: 100%;
+  width: 100%;
 }
 
+/* Auto-scroll to bottom */
+.messages::-webkit-scrollbar {
+  width: 5px;
+}
 
+.messages::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 5px;
+}
+
+.messages::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
