@@ -1,46 +1,89 @@
-.whatsapp-style-upload {
+/* File Upload Container */
+.file-upload-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
   padding: 10px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 10px;
 }
 
-.file-input-label {
-  background-color: #25d366;
-  color: white;
-  padding: 10px 15px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.file-input {
+/* Hidden File Input */
+.file-upload-container input[type="file"] {
   display: none;
 }
 
-.preview-container {
-  position: relative;
-  margin-top: 10px;
-}
-
-.preview-image {
-  max-width: 100px;
-  max-height: 100px;
-  border-radius: 10px;
-}
-
-.preview-video {
-  max-width: 150px;
-  border-radius: 10px;
-}
-
-.upload-btn {
-  background-color: #128c7e;
+/* Upload Button */
+.file-upload-container label {
+  background-color: #25d366;
   color: white;
-  padding: 8px 12px;
+  padding: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* File Preview Container */
+.file-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #ddd;
+  padding: 5px;
   border-radius: 5px;
-  margin-top: 5px;
+  position: relative;
+}
+
+/* Image & Video Preview */
+.file-preview img, 
+.file-preview video {
+  max-width: 100px;
+  border-radius: 5px;
+}
+
+/* Plus (+) Button */
+.add-file-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #25d366;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
   cursor: pointer;
   border: none;
+  position: absolute;
+  right: -15px;
+  bottom: -10px;
+}
+
+/* Upload Button */
+.upload-button {
+  background-color: #128c7e;
+  color: white;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+  font-size: 14px;
+}
+
+.upload-button:disabled {
+  background: gray;
+  cursor: not-allowed;
+}
+
+.upload-button:hover {
+  background-color: #0d7a66;
 }

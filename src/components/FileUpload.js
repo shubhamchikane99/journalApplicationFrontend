@@ -50,20 +50,20 @@ const FileUpload = ({ onUploadSuccess }) => {
     <div className="file-upload-container">
       <input type="file" accept="image/*,video/*" onChange={handleFileChange} />
 
-      {/* Preview Image/Video before Upload */}
-      {preview && (
-        <div className="file-preview">
-          {file?.type.startsWith("video") ? (
-            <video src={preview} width="150" controls />
-          ) : (
-            <img src={preview} width="150" alt="Preview" />
-          )}
-        </div>
-      )}
-
-      <button className="upload-button" onClick={handleUpload} disabled={!file}>
-        Upload
-      </button>
+      <div className="file-preview">
+        {file?.type.startsWith("video") ? (
+          <video src={preview} width="100" controls />
+        ) : (
+          <img src={preview} width="100" alt="Preview" />
+        )}
+        <button
+          className="add-file-button"
+          onClick={handleUpload}
+          disabled={!file}
+        >
+          +
+        </button>
+      </div>
     </div>
   );
 };

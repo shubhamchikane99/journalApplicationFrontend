@@ -2,12 +2,13 @@ import React, { useEffect, useState, useRef } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { fetchData } from "../services/apiService";
+import { postData } from "../services/apiService";
 import { endPoint } from "../services/endPoint";
 import eventBus from "../utils/eventBus"; // ✅ Import eventBus
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import moment from "moment"; // Import Moment.js
-import FileUpload from "../components/FileUpload";
+//import FileUpload from "../components/FileUpload";
 import "../styles/ChatWindow.css";
 
 const ChatWindow = ({ selectedUser, currentUser }) => {
@@ -21,9 +22,8 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
   const typingTimeoutRef = useRef(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef(null);
-  const [fileUrl, setFileUrl] = useState(null); // Store uploaded file URL
-  const [filePreview, setFilePreview] = useState(null);
-
+  const [mediaPreview, setMediaPreview] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!currentUser || !selectedUser) return;
@@ -304,7 +304,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     return date.format("hh:mm A");
   };
 
-  const sendMessage = async () => {
+  const sendMessage = async (uploadedFileUrl = null) => {
     if (!stompClient || !isConnected) {
       setError("Cannot send messages. Server is offline.");
       return;
@@ -323,12 +323,27 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     const currentDateTime = new Date().toISOString(); // Get current timestamp in ISO format
     const formattedDate = formatDate(currentDateTime);
 
-    if (message.trim() !== "" || fileUrl) {
+    const messageContent =
+      uploadedFileUrl?.url ||
+      uploadedFileUrl?.secure_url ||
+      (typeof uploadedFileUrl === "string" ? uploadedFileUrl : "") ||
+      (typeof message === "string" ? message : "");
+
+    // ✅ Correct type assignment
+    const messageType = message.trim()
+      ? "text"
+      : uploadedFileUrl
+      ? "file"
+      : "text";
+
+    console.log("messageContent " + JSON.stringify(messageContent));
+
+    if (messageContent.trim() !== "") {
       const chatMessage = {
         senderId: currentUser.id, // Ensure correct sender ID
         receiverId: selectedUser.id, // Ensure correct receiver ID
-        content: fileUrl || message, // Use file URL if available,
-        type: fileUrl ? "file" : "text", // Determine type
+        content: messageContent, // Use file URL if available,
+        type: messageType, // Determine type
         status: "SENT",
         insertDateTime: formattedDate, // Add timestamp
       };
@@ -345,7 +360,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
           setMessages((prev) => [...prev, chatMessage]);
         }
         setMessage("");
-        setFileUrl(null);
 
         try {
           // ✅ Fetch the latest message after sending
@@ -430,8 +444,48 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
   };
 
   //FileUpload
-  const onUploadSuccess = (url) => {
-    setFileUrl(url);
+  const handleFileChange = async (e) => {
+    if (!e || !e.target || !e.target.files || e.target.files.length === 0) {
+      console.error("No file selected");
+      return;
+    }
+
+    const file = e.target.files[0]; // ✅ Guaranteed to exist here
+    const url = URL.createObjectURL(file);
+    setMediaPreview({ url, type: file.type });
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await postData(
+        endPoint.fileUpload + "/upload",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+
+      if (response?.data) {
+        sendMessage(response.data, "file");
+        setMediaPreview(null);
+      }
+    } catch (error) {
+      console.error("File upload failed:", error);
+    }
+  };
+
+  const handlePaste = (e) => {
+    const items = e.clipboardData.items;
+    for (let item of items) {
+      if (item.type.startsWith("image")) {
+        const blob = item.getAsFile();
+        const file = new File([blob], "pasted-image.png", { type: blob.type });
+
+        const fakeEvent = { target: { files: [file] } };
+        handleFileChange(fakeEvent);
+      }
+    }
   };
 
   return (
@@ -456,9 +510,9 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
               msg.senderId === currentUser.id ? "my-message" : "other-message"
             }
           >
-            <b>
+            {/* <b>
               {msg.senderId === currentUser.id ? "You" : selectedUser.userName}:
-            </b>{" "}
+            </b>{" "} */}
             {msg.type === "file" ? (
               msg.content.endsWith(".mp4") ? (
                 <video src={msg.content} width="200" controls />
@@ -483,10 +537,8 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 📤 File Upload Component */}
-
       {/* ✍️ Message Input Box */}
-      <div className="input-box">
+      <div className="input-box" onPaste={handlePaste}>
         <button
           id="emoji-button"
           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -500,21 +552,44 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
           </div>
         )}
 
+        <div className="input-container">
+          {mediaPreview ? (
+            <div className="media-preview">
+              {mediaPreview.type.startsWith("video") ? (
+                <video src={mediaPreview.url} width="100" controls />
+              ) : (
+                <img src={mediaPreview.url} width="100" alt="Preview" />
+              )}
+              <button
+                className="remove-media"
+                onClick={() => setMediaPreview(null)}
+              >
+                ✖
+              </button>
+            </div>
+          ) : (
+            <input
+              type="text"
+              value={
+                mediaPreview?.url ? `${message} ${mediaPreview.url}` : message
+              }
+              onChange={handleMessageChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Type a message..."
+            />
+          )}
+        </div>
+
+        {/* 📸 Image/Video Upload */}
+        <button onClick={() => fileInputRef.current.click()}>📎</button>
         <input
-          type="text"
-          value={fileUrl ? `${message} ${fileUrl}` : message}
-          onChange={handleMessageChange}
-          onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
+          type="file"
+          accept="image/*,video/*"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
         />
-        {/* Show uploaded file preview */}
-        {filePreview && (
-          <div className="image-preview">
-            <img src={filePreview} alt="Preview" width="100" />
-            <button onClick={() => setFilePreview(null)}>❌</button>
-          </div>
-        )}
-        <FileUpload onUploadSuccess={onUploadSuccess} />
+
         <button onClick={sendMessage} disabled={!isConnected}>
           Send
         </button>

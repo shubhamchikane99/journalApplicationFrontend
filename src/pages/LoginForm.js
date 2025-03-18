@@ -27,6 +27,7 @@ const LoginForm = () => {
         localStorage.setItem("userPassword",passwordInput );
         localStorage.setItem("userId",usernameInput );
         const userData = data.data.users;
+        await fetchData(endPoint.chatMessage + `/${data.data.users.id}/online`);
         login(userData); // Save user data to context and session storage
         navigate(`${usernameInput}/dashboard`); // Navigate to dashboard
       }
