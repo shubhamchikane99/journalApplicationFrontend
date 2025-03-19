@@ -20,6 +20,7 @@
     margin-bottom: 15px;
     border: 1px solid #ccc;
     border-radius: 5px;
+    font-family: monospace;
     font-size: 16px;
   }
   
@@ -27,8 +28,6 @@
     height: 100px;
     width: 490px;
     resize: none;
-    
-    
   }
   
   .journal-button {

@@ -2,8 +2,9 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { AuthContext } from "../context/AuthContext";
 import { fetchData } from "../services/apiService";
+import { postData } from "../services/apiService";
 import { endPoint } from "../services/endPoint";
-import "../styles/loginFromStyle.css"
+import "../styles/loginFromStyle.css";
 
 const LoginForm = () => {
   const [usernameInput, setUsernameInput] = useState("");
@@ -15,7 +16,11 @@ const LoginForm = () => {
   const fetchLoginData = async (usernameInput, passwordInput) => {
     try {
       const data = await fetchData(
-        endPoint.public + "/log-in?userName=" + usernameInput + "&password=" + passwordInput
+        endPoint.public +
+          "/log-in?userName=" +
+          usernameInput +
+          "&password=" +
+          passwordInput
       );
       if (data.error || data.data.error) {
         setError(data.data.errorMessage || "Invalid username or password.");
@@ -23,13 +28,23 @@ const LoginForm = () => {
       }
 
       if (data.data.statusCode === 200) {
-        localStorage.setItem("usersId", JSON.stringify(data.data.users.id))
-        localStorage.setItem("userPassword",passwordInput );
-        localStorage.setItem("userId",usernameInput );
+        localStorage.setItem("usersId", JSON.stringify(data.data.users.id));
+        localStorage.setItem("userPassword", passwordInput);
+        localStorage.setItem("userId", usernameInput);
         const userData = data.data.users;
+        const onlineOfflineUserPayload = {
+          userId: data.data.users.id,
+          activeInActive: true,
+        };
+        console.log("API IS CALLING")
         await fetchData(endPoint.chatMessage + `/${data.data.users.id}/online`);
+        await postData(
+          endPoint.chatMessage + `/online-offline-status`,
+          onlineOfflineUserPayload
+        );
+
         login(userData); // Save user data to context and session storage
-        navigate(`${usernameInput}/dashboard`); // Navigate to dashboard
+        navigate(`${usernameInput}/dashboard/`); // Navigate to dashboard
       }
     } catch (err) {
       setError("Failed to fetch login data. Please try again.");
@@ -65,7 +80,8 @@ const LoginForm = () => {
         <button onClick={handleLogin} className="login-button">
           Login
         </button>
-        {error && <p className="error-message">{error}</p>} {/* Display login error */}
+        {error && <p className="error-message">{error}</p>}{" "}
+        {/* Display login error */}
         <p onClick={() => navigate("/signup")} className="signup-link">
           Don't have an account? Sign Up here
         </p>

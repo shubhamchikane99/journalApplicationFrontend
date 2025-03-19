@@ -19,6 +19,8 @@
   padding: 10px;
   max-height: 100vh; /* Prevents overflow */
   scroll-behavior: smooth; /* Smooth scrolling */
+  font-family: monospace;
+  font-size: 16px;
 }
 
 /* Input Box */
@@ -48,8 +50,9 @@ input[type="text"] {
   padding: 10px;
   border: 1px solid #ccc;
   outline: none;
-  font-size: 16px;
   border-radius: 5px;
+  font-family: monospace;
+  font-size: 16px;
 }
 
 /* Media Preview */
