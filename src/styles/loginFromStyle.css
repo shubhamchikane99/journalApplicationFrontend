@@ -13,6 +13,8 @@ h2 {
   text-align: center;
   margin-bottom: 20px;
   color: #333;
+  font-family: monospace;
+  font-size: 16px;
 }
 
 /* Common form styling for inputs */
@@ -22,6 +24,7 @@ h2 {
   margin: 10px 0;
   border: 1px solid #ccc;
   border-radius: 5px;
+  font-family: monospace;
   font-size: 16px;
 }
 
@@ -35,6 +38,8 @@ h2 {
   font-size: 16px;
   cursor: pointer;
   margin-top: 10px;
+  font-family: monospace;
+  font-size: 16px;
 }
 
 .login-button:hover {
@@ -69,6 +74,7 @@ h2 {
   margin: 10px 0;
   border: 1px solid #ccc;
   border-radius: 5px;
+  font-family: monospace;
   font-size: 16px;
 }
 
@@ -82,6 +88,8 @@ h2 {
   font-size: 16px;
   cursor: pointer;
   margin-top: 10px;
+  font-family: monospace;
+  font-size: 16px;
 }
 
 .signup-button:hover {
@@ -95,6 +103,8 @@ h2 {
   margin: 10px 0;
   border: 1px solid #ccc;
   border-radius: 5px;
+  font-size: 16px;
+  font-family: monospace;
   font-size: 16px;
 }
 

@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { endPoint } from "../services/endPoint";
 import { fetchData } from "../services/apiService";
+import { postData } from "../services/apiService";
 import "../styles/NavBar.css"; // Import the CSS file
 
 const NavBar = ({ onLogout }) => {
@@ -12,6 +13,14 @@ const NavBar = ({ onLogout }) => {
         endPoint.users + "/active-status-update?id=" + loggedInUser.id
       );
       if (data.data.statusCode === 200) {
+        const onlineOfflineUserPayload = {
+          userId: loggedInUser.id,
+          activeInActive: false,
+        };
+        await postData(
+          endPoint.chatMessage + `/online-offline-status`,
+          onlineOfflineUserPayload
+        );
         onLogout();
       }
     } catch (err) {

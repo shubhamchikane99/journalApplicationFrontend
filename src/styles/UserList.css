@@ -1,16 +1,38 @@
 .user-list {
-  width: 250px;
+  width: 220px; /* Slightly reduce width */
   background: #f4f4f4;
-  padding: 15px;
+  padding: 12px;
   border-right: 1px solid #ddd;
 }
 
 .user-item {
-  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px; /* Reduce space between name and status */
+  padding: 8px;
   cursor: pointer;
   border-bottom: 1px solid #ddd;
+  font-size: 13px; /* Reduce font size */
 }
 
 .user-item:hover {
   background: #e0e0e0;
+}
+
+.status-icon {
+  font-size: 10px; /* Make the dot smaller */
+}
+
+.online-status::before,
+.offline-status::before {
+  content: "●";
+  font-size: 8px; /* Even smaller status indicator */
+}
+
+.online-status {
+  color: green;
+}
+
+.offline-status {
+  color: red;
 }
