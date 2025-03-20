@@ -2,7 +2,6 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { AuthContext } from "../context/AuthContext";
 import { fetchData } from "../services/apiService";
-import { postData } from "../services/apiService";
 import { endPoint } from "../services/endPoint";
 import "../styles/loginFromStyle.css";
 
@@ -32,16 +31,6 @@ const LoginForm = () => {
         localStorage.setItem("userPassword", passwordInput);
         localStorage.setItem("userId", usernameInput);
         const userData = data.data.users;
-        const onlineOfflineUserPayload = {
-          userId: data.data.users.id,
-          activeInActive: true,
-        };
-        console.log("API IS CALLING")
-        await fetchData(endPoint.chatMessage + `/${data.data.users.id}/online`);
-        await postData(
-          endPoint.chatMessage + `/online-offline-status`,
-          onlineOfflineUserPayload
-        );
 
         login(userData); // Save user data to context and session storage
         navigate(`${usernameInput}/dashboard/`); // Navigate to dashboard
@@ -56,6 +45,14 @@ const LoginForm = () => {
       fetchLoginData(usernameInput, passwordInput); // Call fetchLoginData here
     } else {
       alert("Please enter username and password.");
+    }
+  };
+
+  //inputbox
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault(); // Prevent new line
+      handleLogin();
     }
   };
 
@@ -74,6 +71,7 @@ const LoginForm = () => {
           type="password"
           placeholder="Password"
           value={passwordInput}
+          onKeyDown={handleKeyDown}
           onChange={(e) => setPasswordInput(e.target.value)}
           className="login-input"
         />
