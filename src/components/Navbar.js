@@ -1,13 +1,20 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { endPoint } from "../services/endPoint";
-import { fetchData } from "../services/apiService";
-import { postData } from "../services/apiService";
-import "../styles/NavBar.css"; // Import the CSS file
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import { fetchData, postData } from "../services/apiService";
+import "../styles/NavBar.css";
 
 const NavBar = ({ onLogout }) => {
+  const loggedInUser = JSON.parse(localStorage.getItem("user"));
+  const [unreadCount, setUnreadCount] = useState(0);
+  const location = useLocation();
+  const [stompClient, setStompClient] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [error, setError] = useState(null);
+
   const fetchLoginData = async () => {
-    const loggedInUser = JSON.parse(localStorage.getItem("user"));
     try {
       const data = await fetchData(
         endPoint.users + "/active-status-update?id=" + loggedInUser.id
@@ -28,14 +35,81 @@ const NavBar = ({ onLogout }) => {
     }
   };
 
+  // Unread message count
+  useEffect(() => {
+    if (loggedInUser) {
+      const unreadMessageCount = async () => {
+        try {
+          const data = await fetchData(
+            endPoint.chatMessage + "/unread-msg?userId=" + loggedInUser.id
+          );
+          setUnreadCount(data.data);
+        } catch (err) {
+          console.error("Failed to fetch unread messages.");
+        }
+      };
+
+      unreadMessageCount();
+    }
+  }, [location.pathname, loggedInUser]);
+
+  // Web socket connect for msg count update in real-time
+  useEffect(() => {
+    const userId = loggedInUser.id;
+   // const socket = new SockJS("http://192.168.67.89:8088/ws");
+   const socket = new SockJS("https://journalapplication-production-8570.up.railway.app/ws");
+   const client = new Client({
+      webSocketFactory: () => socket,
+      debug: (str) => str,
+      reconnectDelay: 5000,
+
+      onConnect: () => {
+        setIsConnected(true);
+        setError(null);
+
+        client.subscribe(`/topic/unread-msg/${userId}`, (message) => {
+          if (message.body === userId) {
+            setUnreadCount((prevCount) => prevCount + 1);
+          }
+        });
+      },
+
+      onDisconnect: () => {
+        setIsConnected(false);
+        setError("Disconnected. Reconnecting...");
+      },
+
+      onStompError: (frame) => {
+        setError("Server error. Please try again later.");
+      },
+    });
+
+    client.activate();
+    setStompClient(client);
+
+    return () => {
+      if (client) {
+        client.deactivate();
+      }
+    };
+  }, [loggedInUser.id]);
+
+  // Check if STOMP is disconnected before publishing
+  useEffect(() => {
+    if (stompClient && !isConnected) {
+      stompClient.activate();
+    } else if (error) {
+    }
+  }, [isConnected, stompClient, error]);
+
   return (
     <nav className="navbar">
-      <div class="nav-links">
+      <div className="nav-links">
         <Link to="/journal-entry">Journal Entry</Link>
-        <Link to="/chat">Chat</Link>
+        <Link to="/chat">Chat {unreadCount > 0 && `(${unreadCount})`}</Link>
         <Link to="/tic-tac-toe">Tic Tac Toe</Link>
       </div>
-      <button class="logout-btn" onClick={fetchLoginData}>
+      <button className="logout-btn" onClick={fetchLoginData}>
         Logout
       </button>
     </nav>

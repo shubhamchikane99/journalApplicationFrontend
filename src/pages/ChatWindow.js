@@ -30,7 +30,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     if (!currentUser || !selectedUser) return;
 
     const userId = currentUser.id; // Use user ID directly
-    //const socket = new SockJS("http://192.168.165.89:8088/ws");
+    //const socket = new SockJS("http://192.168.67.89:8088/ws");
     const socket = new SockJS("https://journalapplication-production-8570.up.railway.app/ws");
 
     const client = new Client({
@@ -41,7 +41,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         setIsConnected(true);
         setError(null);
 
-        // ✅ Mark user as online in
+        //  Mark user as online in
         const markUserOnline = async () => {
           try {
             const userStatus = await fetchData(
@@ -65,6 +65,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         client.subscribe(userPrivateDestination, (message) => {
           const receivedMessage = JSON.parse(message.body);
           //  Only add messages related to the currently selected chat
+
           if (
             (receivedMessage.senderId === selectedUser.id &&
               receivedMessage.receiverId === currentUser.id) ||
@@ -100,10 +101,10 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
               );
             }
           } else {
-            console.warn(
-              "🚨 Message ignored: Not for the current chat window",
-              receivedMessage
-            );
+            // console.warn(
+            //   "🚨 Message ignored: Not for the current chat window",
+            //   receivedMessage
+            // );
           }
         });
 
@@ -142,9 +143,8 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
       onDisconnect: () => {
         setIsConnected(false);
         setError("Disconnected. Reconnecting...");
-
         // 🔴 Mark user as offline in DB
-        fetchData(endPoint.chatMessage`/${userId}/offline`);
+       // fetchData(endPoint.chatMessage`/${userId}/offline`);
       },
       onStompError: (frame) => {
         console.error("❌ STOMP Error:", frame.headers["message"]);

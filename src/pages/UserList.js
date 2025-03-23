@@ -1,10 +1,27 @@
 import React, { useEffect, useState } from "react";
 import eventBus from "../utils/eventBus";
 import "../styles/UserList.css";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 
 const UserList = ({ users, selectUser }) => {
   const [typingUsers, setTypingUsers] = useState({});
   const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [stompClient, setStompClient] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [error, setError] = useState(null);
+  const [unreadCounts, setUnreadCounts] = useState("");
+
+  const loggedInUser = JSON.parse(localStorage.getItem("user"));
+
+  // Initialize unread counts when users list changes
+  useEffect(() => {
+    const initialCounts = {};
+    users.forEach((user) => {
+      initialCounts[user.id] = user.unreadMsgCount || 0;
+    });
+    setUnreadCounts(initialCounts);
+  }, [users]);
 
   useEffect(() => {
     // Listen for typing events globally
@@ -28,6 +45,72 @@ const UserList = ({ users, selectUser }) => {
     };
   }, []);
 
+  // Web socket connect for msg count update in real-time
+  useEffect(() => {
+    const userId = loggedInUser.id;
+    //const socket = new SockJS("http://192.168.67.89:8088/ws");
+    const socket = new SockJS("https://journalapplication-production-8570.up.railway.app/ws");
+    const client = new Client({
+      webSocketFactory: () => socket,
+      debug: (str) => str,
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000, // Add heartbeat for connection stability
+      heartbeatOutgoing: 4000,
+
+      onConnect: () => {
+        setIsConnected(true);
+        setError(null);
+
+        client.subscribe(`/topic/private-unread-msg/${userId}`, (message) => {
+          const senderId = message.body;
+
+          //   if (selectUser?.id && selectUser.id !== senderId) {
+          setUnreadCounts((prev) => {
+            const newCounts = { ...prev };
+            newCounts[senderId] = (newCounts[senderId] || 0) + 1;
+            return newCounts;
+          });
+          //    }
+        });
+      },
+
+      onDisconnect: () => {
+        setIsConnected(false);
+        setError("Disconnected. Reconnecting...");
+      },
+
+      onStompError: (frame) => {
+        setError("Server error. Please try again later.");
+      },
+    });
+
+    client.activate();
+    setStompClient(client);
+
+    return () => {
+      if (client) {
+        client.deactivate();
+      }
+    };
+  }, [loggedInUser.id, selectUser]);
+
+  // Check if STOMP is disconnected before publishing
+  useEffect(() => {
+    if (stompClient && !isConnected) {
+      stompClient.activate();
+    } else if (error) {
+    }
+  }, [isConnected, stompClient, error]);
+
+  // Reset unread count on chat open
+  const handleSelectUser = (user) => {
+    selectUser(user);
+    setUnreadCounts((prev) => ({
+      ...prev,
+      [user.id]: 0,
+    }));
+  };
+
   return (
     <div className="user-list">
       <h2>Users</h2>
@@ -35,19 +118,28 @@ const UserList = ({ users, selectUser }) => {
         <div
           key={user.id}
           className="user-item"
-          onClick={() => selectUser(user)}
+          onClick={() => {
+            selectUser(user);
+            handleSelectUser(user);
+          }}
         >
           {user.firstName}
+
           {/*  Show online/offline status */}
           {Array.isArray(onlineUsers) && onlineUsers.includes(user.id) ? (
             <span className="online-status"> </span>
           ) : (
             <span className="offline-status"> </span>
           )}
-
           {/* Show "typing" for any user */}
           {typingUsers[user.id] && (
             <span className="typing-indicator"> ✍️ typing...</span>
+          )}
+          {/* Show unread message count */}
+          {unreadCounts[user.id] > 0 && (
+            <span className="unread-count">
+              ({unreadCounts[user.id]} unread)
+            </span>
           )}
         </div>
       ))}
@@ -55,4 +147,4 @@ const UserList = ({ users, selectUser }) => {
   );
 };
 
-export default UserList;
+export default UserList; //

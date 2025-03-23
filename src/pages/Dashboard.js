@@ -29,7 +29,7 @@ return (
 
     {/* Define the routes for each feature */}
     <Routes>
-      <Route path="chat" element={<Chat />} />
+      <Route path="chat" element={<Chat  />} />
       <Route path="journal-entry" element={<JournalEntry />} />
       <Route path="tic-tac-toe" element={<TicTacToe />} />
     </Routes>
