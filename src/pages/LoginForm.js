@@ -27,7 +27,7 @@ const LoginForm = () => {
       }
 
       if (data.data.statusCode === 200) {
-        localStorage.setItem("usersId", JSON.stringify(data.data.users.id));
+        localStorage.setItem("usersId", JSON.stringify(data?.data?.users.id));
         localStorage.setItem("userPassword", passwordInput);
         localStorage.setItem("userId", usernameInput);
         const userData = data.data.users;
@@ -49,12 +49,12 @@ const LoginForm = () => {
   };
 
   //inputbox
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault(); // Prevent new line
-      handleLogin();
-    }
-  };
+  // const handleKeyDown = (e) => {
+  //   if (e.key === "Enter" && !e.shiftKey) {
+  //     e.preventDefault(); // Prevent new line
+  //     handleLogin();
+  //   }
+  // };
 
   return (
     <div className="login-container">
@@ -71,7 +71,7 @@ const LoginForm = () => {
           type="password"
           placeholder="Password"
           value={passwordInput}
-          onKeyDown={handleKeyDown}
+          // onKeyDown={handleKeyDown}
           onChange={(e) => setPasswordInput(e.target.value)}
           className="login-input"
         />

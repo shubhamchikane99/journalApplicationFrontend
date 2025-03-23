@@ -7,7 +7,6 @@ const NotFound = () => {
 
   const handleBackToDashboard = () => {
     let  username = localStorage.getItem("userName"); // Retrieve the username from localStorage or another context
-    console.log("username " + username)
     if (username) {
       username = username.replace(/['"]+/g, "");
       navigate(`/${username}/dashboard`); // Navigate to the dynamic dashboard URL
