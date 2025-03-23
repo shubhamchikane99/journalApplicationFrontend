@@ -36,3 +36,16 @@
 .offline-status {
   color: red;
 }
+.unread-count {
+  background-color: #25d366; /* WhatsApp Green */
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 12px;
+  padding: 5px 10px;
+  margin-left: 8px;
+  display: inline-block;
+  min-width: 24px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+} 

@@ -118,7 +118,6 @@ const SignUpForm = () => {
 
       const data = await postData(endPoint.public + "/create-user" , userPayload);
 
-      console.log("log " + JSON.stringify(data))
       if (data.data.statusCode===200) {
         alert(data.data.errorMessage);
         setUsername("");
