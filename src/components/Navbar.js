@@ -56,9 +56,10 @@ const NavBar = ({ onLogout }) => {
   // Web socket connect for msg count update in real-time
   useEffect(() => {
     const userId = loggedInUser.id;
-   // const socket = new SockJS("http://192.168.67.89:8088/ws");
-   const socket = new SockJS("https://journalapplication-production-8570.up.railway.app/ws");
-   const client = new Client({
+    const apiUrl = process.env.REACT_APP_BACKEND_URL;
+    const socket = new SockJS(`${apiUrl}/ws`);
+    //const socket = new SockJS("https://journalapplication-production-8570.up.railway.app/ws");
+    const client = new Client({
       webSocketFactory: () => socket,
       debug: (str) => str,
       reconnectDelay: 5000,
