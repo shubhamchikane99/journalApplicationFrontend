@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import eventBus from "../utils/eventBus";
 import "../styles/UserList.css";
 import { Client } from "@stomp/stompjs";
@@ -11,6 +11,8 @@ const UserList = ({ users, selectUser }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState(null);
   const [unreadCounts, setUnreadCounts] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState(new Set());
+  const selectedUsersRef = useRef();
 
   const loggedInUser = JSON.parse(localStorage.getItem("user"));
 
@@ -35,6 +37,7 @@ const UserList = ({ users, selectUser }) => {
     // Listen for online/offline status updates
     const handleOnlineOfflineStatus = ({ updatedUsers }) => {
       setOnlineUsers(updatedUsers);
+      selectedUsersRef.current = updatedUsers;
     };
 
     eventBus.on("typingStatus", handleTypingStatus);
@@ -45,11 +48,25 @@ const UserList = ({ users, selectUser }) => {
     };
   }, []);
 
+  const handleSelectedUser = ({ selectedUserId }) => {
+    setSelectedUsers(selectedUserId);
+  };
+
+  useEffect(() => {
+    eventBus.on("selectedUsers", handleSelectedUser);
+
+    // Cleanup on unmount to avoid memory leaks
+    return () => {
+      eventBus.off("selectedUsers", handleSelectedUser);
+    };
+  }, []);
+
   // Web socket connect for msg count update in real-time
   useEffect(() => {
     const userId = loggedInUser.id;
-    //const socket = new SockJS("http://192.168.67.89:8088/ws");
-    const socket = new SockJS("https://journalapplication-production-8570.up.railway.app/ws");
+    const apiUrl = process.env.REACT_APP_BACKEND_URL;
+    const socket = new SockJS(`${apiUrl}/ws`);
+    //const socket = new SockJS("https://journalapplication-production-8570.up.railway.app/ws");
     const client = new Client({
       webSocketFactory: () => socket,
       debug: (str) => str,
@@ -64,13 +81,17 @@ const UserList = ({ users, selectUser }) => {
         client.subscribe(`/topic/private-unread-msg/${userId}`, (message) => {
           const senderId = message.body;
 
-          //   if (selectUser?.id && selectUser.id !== senderId) {
-          setUnreadCounts((prev) => {
-            const newCounts = { ...prev };
-            newCounts[senderId] = (newCounts[senderId] || 0) + 1;
-            return newCounts;
-          });
-          //    }
+          console.log("senderId   " + senderId);
+
+          console.log("SelectedUsers   " + selectedUsers);
+
+          if (selectedUsers !== senderId) {
+            setUnreadCounts((prev) => {
+              const newCounts = { ...prev };
+              newCounts[senderId] = (newCounts[senderId] || 0) + 1;
+              return newCounts;
+            });
+          }
         });
       },
 
@@ -92,7 +113,7 @@ const UserList = ({ users, selectUser }) => {
         client.deactivate();
       }
     };
-  }, [loggedInUser.id, selectUser]);
+  }, [loggedInUser.id, selectedUsers]);
 
   // Check if STOMP is disconnected before publishing
   useEffect(() => {

@@ -30,8 +30,9 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     if (!currentUser || !selectedUser) return;
 
     const userId = currentUser.id; // Use user ID directly
-    //const socket = new SockJS("http://192.168.67.89:8088/ws");
-    const socket = new SockJS("https://journalapplication-production-8570.up.railway.app/ws");
+    const apiUrl = process.env.REACT_APP_BACKEND_URL;
+    const socket = new SockJS(`${apiUrl}/ws`);
+    //const socket = new SockJS("https://journalapplication-production-8570.up.railway.app/ws");
 
     const client = new Client({
       webSocketFactory: () => socket,
@@ -55,6 +56,13 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
           }
         };
         markUserOnline();
+
+        console.log("SELECTED ID 1" + selectedUser.id);
+        //selectedUserId To Unread Messages
+        eventBus.emit("selectedUsers", {
+          selectedUserId: selectedUser?.id,
+        });
+
 
         // **Immediately call API to mark messages as SEEN**
         fetchData(
@@ -144,7 +152,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         setIsConnected(false);
         setError("Disconnected. Reconnecting...");
         // 🔴 Mark user as offline in DB
-       // fetchData(endPoint.chatMessage`/${userId}/offline`);
+        // fetchData(endPoint.chatMessage`/${userId}/offline`);
       },
       onStompError: (frame) => {
         console.error("❌ STOMP Error:", frame.headers["message"]);
