@@ -67,6 +67,7 @@ const LoginForm = () => {
           type="text"
           placeholder="Username"
           value={usernameInput}
+          onKeyDown={handleKeyDown}
           onChange={(e) => setUsernameInput(e.target.value)}
           className="login-input"
           disabled={loading}
@@ -80,7 +81,11 @@ const LoginForm = () => {
           className="login-input"
           disabled={loading}
         />
-        <button onClick={handleLogin} className="login-button" disabled={loading}>
+        <button
+          onClick={handleLogin}
+          className="login-button"
+          disabled={loading}
+        >
           Login
         </button>
         {error && <p className="error-message">{error}</p>}
