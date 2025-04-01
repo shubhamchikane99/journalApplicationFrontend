@@ -1,12 +1,12 @@
-import React, { useState } from "react";
-import { fetchData } from "../services/apiService";
+import React, { useState, useEffect, useCallback } from "react";
+import { fetchData, postData } from "../services/apiService";
 import { endPoint } from "../services/endPoint";
-import { postData } from "../services/apiService";
 import { useNavigate } from "react-router-dom";
+import Loader from "../components/Loader";
 import "../styles/SignUpForm.css";
 
 const SignUpForm = () => {
-  const [firstName, setFirstname] = useState("");
+  const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -18,34 +18,90 @@ const SignUpForm = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
+  const [otpValidationLoading, setOtpValidationLoading] = useState(false);
+  const [usernameError, setUsernameError] = useState("");
+  const [emailError, setEmailError] = useState("");
 
   const navigate = useNavigate();
 
-  const handleSendOtp = async () => {
-    if (!email && !username) {
-      setError("Please enter both username and email.");
-      return;
-    } else if (!email) {
-      setError("Please enter an email to send OTP.");
-      return;
-    } else if (!username) {
-      setError("Please enter a username.");
+  // Function to check if username is taken
+  const checkUsername = useCallback(async () => {
+    // If username is 'admin', block it or do any specific handling
+    if (username.trim().toLowerCase() === "admin") {
+      setUsernameError("The username 'admin' is not allowed.");
       return;
     }
 
+    //if (!username.trim()) return; // Prevent API call if username is empty
+    try {
+      const data = await fetchData(
+        `${endPoint.public}/check-username?userName=${username}`
+      );
+      if (data.data.statusCode === 409) {
+        setUsernameError(data.data.errorMessage);
+      } else {
+        setUsernameError("");
+      }
+    } catch {
+      setUsernameError("Error checking username.");
+    }
+  }, [username]);
+
+  // Function to check if email is taken
+  const checkEmail = useCallback(async () => {
+    if (!email.trim()) return; // Prevent API call if email is empty
+    try {
+      const data = await fetchData(
+        `${endPoint.public}/check-email?emailId=${email}`
+      );
+      if (data.data.statusCode === 409) {
+        setUsernameError(data.data.errorMessage);
+      } else {
+        setUsernameError("");
+      }
+    } catch {
+      setEmailError("Error checking email.");
+    }
+  }, [email]);
+
+  // Call API when username changes
+  useEffect(() => {
+    if (!username.trim()) {
+      setUsernameError("");
+      return;
+    }
+    const delayDebounceFn = setTimeout(() => {
+      checkUsername();
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [username, email, checkUsername]);
+
+  // Call API when email changes
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      checkEmail();
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [email, username, checkEmail]);
+
+  const handleSendOtp = async () => {
+    if (!email) {
+      setError("Please enter an email to send OTP.");
+      return;
+    }
     setOtpLoading(true);
     try {
-      // API call to send OTP
-      const data = await fetchData(endPoint.public + "/send-otp?emailId=" + email);
-
-      if (data.data.error === false) {
+      const data = await fetchData(
+        `${endPoint.public}/send-otp?emailId=${email}`
+      );
+      if (!data.data.error) {
         alert("OTP sent to your email.");
         setIsOtpSent(true);
-        setError(""); // Clear any previous error messages
+        setError("");
       } else {
         setError(data.message || "Failed to send OTP.");
       }
-    } catch (err) {
+    } catch {
       setError("Error sending OTP. Please try again.");
     } finally {
       setOtpLoading(false);
@@ -57,138 +113,123 @@ const SignUpForm = () => {
       setError("Please enter the OTP.");
       return;
     }
-
-    setLoading(true);
+    setOtpValidationLoading(true);
     try {
-      // API call to validate OTP
       const data = await fetchData(
-        endPoint.public + "/validate-otp?emailId=" + email + "&otp=" + otp
+        `${endPoint.public}/validate-otp?emailId=${email}&otp=${otp}`
       );
-
       if (data.data.statusCode === 200) {
         alert("OTP verified successfully.");
         setIsOtpVerified(true);
-        setError(""); // Clear any previous error messages
+        setError("");
       } else {
         setError(data.data.errorMessage || "Invalid OTP.");
       }
-    } catch (err) {
+    } catch {
       setError("Error validating OTP. Please try again.");
     } finally {
-      setLoading(false);
+      setOtpValidationLoading(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
-    if (!username || !password) {
-      setError("Username and password are required.");
-      return;
-    }
-
     if (!isOtpVerified) {
       setError("Please verify your OTP first.");
       return;
     }
-
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    if (usernameError || emailError) {
+      setError("Please resolve errors before submitting.");
+      return;
+    }
     setLoading(true);
-
     const userPayload = {
-      firstName : firstName,
-      lastName : lastName,
-      userName: username, 
-      password: password, 
-      email: email,
+      firstName,
+      lastName,
+      userName: username,
+      password,
+      email,
       sentimentAnalysis: 1,
-      accessRole : [
-        {
-          accessRoleName : "ADMIN"
-        }
-      ] 
+      accessRole: [{ accessRoleName: "ADMIN" }],
     };
-
     try {
-      // Simulate sign-up API response
-
-      const data = await postData(endPoint.public + "/create-user" , userPayload);
-
-      if (data.data.statusCode===200) {
+      const data = await postData(
+        `${endPoint.public}/create-user`,
+        userPayload
+      );
+      if (data.data.statusCode === 200) {
         alert(data.data.errorMessage);
-        setUsername("");
-        setPassword("");
-        setConfirmPassword("");
-        setOtp("");
-        navigate("/"); // Redirect to login
+        navigate("/");
       } else {
-        alert(data.data.errorMessage)
+        setError(data.data.errorMessage);
+        alert(data.data.errorMessage);
       }
-    } catch (err) {
+    } catch {
       setError("Failed to create account. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  // Function to validate email format
+  const validateEmailFormat = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  };
+
+  // Disable Send OTP button until username and email are valid
+  const isFormValid =
+    !usernameError &&
+    !emailError &&
+    email &&
+    username &&
+    validateEmailFormat(email);
+
   return (
     <div className="container">
+      {loading && <Loader />}
       <h2>Sign Up</h2>
       {error && <p className="error">{error}</p>}
-
       <form onSubmit={handleSubmit}>
-      <div>
-          <label htmlFor="firstName">First Name:</label>
-          <input
-            type="text"
-            id="firstName"
-            value={firstName}
-            onChange={(e) => setFirstname(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="lastName">Last Name:</label>
-          <input
-            type="text"
-            id="lastName"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="username">Username:</label>
-          <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="email">Email:</label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-
+        <input
+          type="text"
+          placeholder="First Name"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          required
+        />
+        <input
+          type="text"
+          placeholder="Last Name"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          required
+        />
+        <input
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+        {usernameError && <p className="error">{usernameError}</p>}
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        {emailError && <p className="error">{emailError}</p>}
         {isOtpSent && (
-          <div>
-            <label htmlFor="otp">Enter OTP:</label>
+          <>
             <input
               type="text"
-              id="otp"
+              placeholder="Enter OTP"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               required
@@ -196,56 +237,39 @@ const SignUpForm = () => {
             <button
               type="button"
               onClick={handleValidateOtp}
-              disabled={loading}
-              style={{ marginBottom: "5px", marginTop : "5px" }}
-
+              disabled={otpValidationLoading}
             >
-              {loading ? "Validating OTP..." : "Validate OTP"}
+              {otpValidationLoading ? "Validating..." : "Validate OTP"}
             </button>
-            <button
-              type="button"
-              onClick={handleSendOtp}
-              disabled={otpLoading}
-              
-            >
-              {otpLoading ? "Resending OTP..." : "Resend OTP"}
-            </button>
-          </div>
+          </>
         )}
-
         {!isOtpSent && (
-          <button type="button" onClick={handleSendOtp} disabled={otpLoading}>
-            {otpLoading ? "Sending OTP..." : "Send OTP"}
+          <button
+            type="button"
+            onClick={handleSendOtp}
+            disabled={otpLoading || !isFormValid}
+          >
+            {otpLoading ? "Sending..." : "Send OTP"}
           </button>
         )}
-
-        <div>
-          <label htmlFor="password">Password:</label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="confirmPassword">Confirm Password:</label>
-          <input
-            type="password"
-            id="confirmPassword"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-        </div>
-
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+        />
         <button type="submit" disabled={loading || !isOtpVerified}>
           {loading ? "Signing Up..." : "Sign Up"}
         </button>
       </form>
-
       <p onClick={() => navigate("/")} className="signup-link">
         Already have an account? Login here
       </p>
