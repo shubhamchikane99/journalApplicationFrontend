@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import eventBus from "../utils/eventBus";
 import "../styles/UserList.css";
 import { Client } from "@stomp/stompjs";
@@ -12,7 +12,6 @@ const UserList = ({ users, selectUser }) => {
   const [error, setError] = useState(null);
   const [unreadCounts, setUnreadCounts] = useState("");
   const [selectedUsers, setSelectedUsers] = useState(new Set());
-  const selectedUsersRef = useRef();
 
   const loggedInUser = JSON.parse(localStorage.getItem("user"));
 
@@ -34,14 +33,7 @@ const UserList = ({ users, selectUser }) => {
       }));
     };
 
-    // Listen for online/offline status updates
-    const handleOnlineOfflineStatus = ({ updatedUsers }) => {
-      setOnlineUsers(updatedUsers);
-      selectedUsersRef.current = updatedUsers;
-    };
-
     eventBus.on("typingStatus", handleTypingStatus);
-    eventBus.on("onlineOfflineStatus", handleOnlineOfflineStatus);
 
     return () => {
       eventBus.off("typingStatus", handleTypingStatus);
@@ -81,10 +73,6 @@ const UserList = ({ users, selectUser }) => {
         client.subscribe(`/topic/private-unread-msg/${userId}`, (message) => {
           const senderId = message.body;
 
-          console.log("senderId   " + senderId);
-
-          console.log("SelectedUsers   " + selectedUsers);
-
           if (selectedUsers !== senderId) {
             setUnreadCounts((prev) => {
               const newCounts = { ...prev };
@@ -92,6 +80,16 @@ const UserList = ({ users, selectUser }) => {
               return newCounts;
             });
           }
+        });
+
+        //onlineOffline Users
+        client.subscribe(`/topic/online-offline-user`, (message) => {
+          const updatedOnlineUsers = JSON.parse(message.body); // Ensure it's an array
+
+          const onlineUsersArray = Array.isArray(updatedOnlineUsers)
+            ? updatedOnlineUsers
+            : [];
+          setOnlineUsers(Array.from(onlineUsersArray));
         });
       },
 
@@ -147,11 +145,18 @@ const UserList = ({ users, selectUser }) => {
           {user.firstName}
 
           {/*  Show online/offline status */}
-          {Array.isArray(onlineUsers) && onlineUsers.includes(user.id) ? (
+          {Array.isArray(onlineUsers) && onlineUsers.length > 0 ? (
+            onlineUsers.includes(user.id) ? (
+              <span className="online-status"> </span>
+            ) : (
+              <span className="offline-status"> </span>
+            )
+          ) : user.isActive === 1 ? (
             <span className="online-status"> </span>
           ) : (
             <span className="offline-status"> </span>
           )}
+
           {/* Show "typing" for any user */}
           {typingUsers[user.id] && (
             <span className="typing-indicator"> ✍️ typing...</span>
