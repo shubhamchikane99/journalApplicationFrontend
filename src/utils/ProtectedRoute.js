@@ -11,13 +11,13 @@ const PrivateRoute = ({ children }) => {
   let storedUsername = localStorage.getItem("userId");
   storedUsername = storedUsername ? storedUsername.replace(/['"]+/g, "") : "";
 
-  console.log("User:", user, "Stored Username:", storedUsername, "URL Username:", username);
-
-  
   // Apply the condition only for the dashboard route
-  if (location.pathname.includes("/dashboard") && (!user || storedUsername !== username)) {
+  if (
+    location.pathname.includes("/dashboard") &&
+    (!user || storedUsername !== username)
+  ) {
     return <Navigate to="/" replace />;
-  } else if(!user) {
+  } else if (!user) {
     return <Navigate to="/" replace />;
   }
 

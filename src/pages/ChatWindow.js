@@ -57,12 +57,10 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         };
         markUserOnline();
 
-        console.log("SELECTED ID 1" + selectedUser.id);
         //selectedUserId To Unread Messages
         eventBus.emit("selectedUsers", {
           selectedUserId: selectedUser?.id,
         });
-
 
         // **Immediately call API to mark messages as SEEN**
         fetchData(
@@ -135,14 +133,9 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
         //onlineOffline Users
         client.subscribe(`/topic/online-offline-user`, (message) => {
           const updatedOnlineUsers = JSON.parse(message.body); // Ensure it's an array
-
           const onlineUsersArray = Array.isArray(updatedOnlineUsers)
             ? updatedOnlineUsers
             : [];
-
-          eventBus.emit("onlineOfflineStatus", {
-            updatedUsers: Array.from(onlineUsersArray), // Convert Set to Array before emitting
-          });
 
           setOnlineUsers(Array.from(onlineUsersArray));
         });
@@ -512,12 +505,17 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
   return (
     <div className="chat-window">
       {/* 🔥 Show the selected user's name on top */}
+
       <h3>
         Chat with {selectedUser?.firstName || "Select a user"}
-        {Array.isArray(onlineUsers) &&
-        selectedUser &&
-        onlineUsers.includes(selectedUser.id)
-          ? " ✅ (Online)"
+        {selectedUser
+          ? Array.isArray(onlineUsers) && onlineUsers.length > 0
+            ? onlineUsers.includes(selectedUser.id)
+              ? " ✅ (Online)"
+              : " ❌ (Offline)"
+            : selectedUser.isActive === 1
+            ? " ✅ (Online)"
+            : " ❌ (Offline)"
           : " ❌ (Offline)"}
       </h3>
 
