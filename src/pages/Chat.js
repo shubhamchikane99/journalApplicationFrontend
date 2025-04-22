@@ -6,36 +6,45 @@ import { endPoint } from "../services/endPoint";
 import "../styles/Chat.css";
 
 // Function to fetch users
-const fetchUsersData = async (setUsers, setError) => {
+const fetchUsersData = async (
+  setUsers,
+  setAllUsers,
+  setRequestUsers,
+  setError
+) => {
   try {
     const data = await fetchData(endPoint.users + "/get-all");
 
-    if (data.error || data.data.error) {
-      setError(data.data.errorMessage || "Failed to fetch users.");
+    if (data.error || data.data?.error) {
+      setError(data.data?.errorMessage || "Failed to fetch users.");
       return;
     }
 
-    if (data.data && Array.isArray(data.data)) {
-      setUsers(data.data); // Set the fetched users
+    if (data.data) {
+      // Log the values before setting them
+      setUsers(data.data.chat || []); // Use chat list in this tab
+      setAllUsers(data.data.allUsers || []); // Store all users for another tab
+      setRequestUsers(data.data.request || []);
     }
   } catch (err) {
+    console.error("Fetch error:", err);
     setError("Failed to fetch users data. Please try again.");
   }
 };
 
 const Chat = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState([]); // Chat users
+  const [allUsers, setAllUsers] = useState([]); // For future Request tab
+  const [requestUsers, setRequestUsers] = useState([]); // For future Request tab
   const [selectedUser, setSelectedUser] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [error, setError] = useState("");
 
   // Fetch users when the component loads
   useEffect(() => {
-    fetchUsersData(setUsers, setError);
+    fetchUsersData(setUsers, setAllUsers, setRequestUsers, setError);
 
-    // Get the logged-in user from local storage (from login)
-    const loggedInUser = JSON.parse(localStorage.getItem("user")); // Make sure to parse JSON
-
+    const loggedInUser = JSON.parse(localStorage.getItem("user"));
     if (loggedInUser) {
       setCurrentUser(loggedInUser);
     } else {
@@ -49,7 +58,12 @@ const Chat = () => {
       {error && <div className="error-message">{error}</div>}
 
       {/* Left Side - User List */}
-      <UserList users={users} selectUser={setSelectedUser} />
+      <UserList
+        users={users}
+        allUsers={allUsers} // Pass allUsers here
+        requestUsers={requestUsers}
+        selectUser={setSelectedUser}
+      />
 
       {/* Right Side - Chat Window */}
       {selectedUser && currentUser ? (
