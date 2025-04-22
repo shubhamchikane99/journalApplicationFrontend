@@ -1,51 +1,315 @@
-.user-list {
-  width: 220px; /* Slightly reduce width */
-  background: #f4f4f4;
-  padding: 12px;
-  border-right: 1px solid #ddd;
+/* Container for the entire user list */
+.user-list-container {
+  width: 340px;
+  background: linear-gradient(145deg, #ffffff, #f0f2f5);
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e4e8;
 }
 
+/* Tabs container */
+.tabs-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  background: #ffffff;
+  padding: 6px;
+  border-radius: 8px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Tab buttons */
+.tab-button {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  background: #e8ecef;
+  color: #333;
+  font-weight: 500;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+  background: #d9e1e8;
+}
+
+.tab-button.active {
+  background: linear-gradient(90deg, #2196f3, #21cbf3);
+  color: white;
+  box-shadow: 0 2px 6px rgba(33, 150, 243, 0.3);
+}
+
+/* No users message */
+.no-users {
+  padding: 12px;
+  color: #666;
+  font-size: 14px;
+  text-align: center;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+/* Scrollable user list */
+.user-list-scroll {
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #c0c4cc #f0f2f5;
+}
+
+.user-list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.user-list-scroll::-webkit-scrollbar-track {
+  background: #f0f2f5;
+  border-radius: 3px;
+}
+
+.user-list-scroll::-webkit-scrollbar-thumb {
+  background: #c0c4cc;
+  border-radius: 3px;
+}
+
+/* User item */
 .user-item {
   display: flex;
   align-items: center;
-  gap: 6px; /* Reduce space between name and status */
-  padding: 8px;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border-radius: 8px;
+  margin-bottom: 8px;
   cursor: pointer;
-  border-bottom: 1px solid #ddd;
-  font-size: 13px; /* Reduce font size */
+  transition: all 0.2s ease;
+  border: 1px solid #e8ecef;
 }
 
 .user-item:hover {
-  background: #e0e0e0;
+  background: #f8f9fa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-.status-icon {
-  font-size: 10px; /* Make the dot smaller */
+/* User name */
+.user-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
 }
 
-.online-status::before,
-.offline-status::before {
-  content: "●";
-  font-size: 8px; /* Even smaller status indicator */
+/* Online/offline status */
+.online-status,
+.offline-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
 }
 
 .online-status {
-  color: green;
+  background: #00cc00;
+  box-shadow: 0 0 4px rgba(0, 204, 0, 0.5);
 }
 
 .offline-status {
-  color: red;
+  background: #ff3333;
+  box-shadow: 0 0 4px rgba(255, 51, 51, 0.5);
 }
+
+/* Typing indicator */
+.typing-indicator {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Unread count */
 .unread-count {
-  background-color: #25d366; /* WhatsApp Green */
+  background: #25d366;
   color: white;
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 600;
   border-radius: 12px;
-  padding: 5px 10px;
-  /* margin-left: 8px; */
-  display: inline-block;
-  min-width: 24px;
+  padding: 4px 8px;
+  min-width: 20px;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-} 
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Override conflicting add-friend-btn styles */
+.add-friend-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto; /* Remove fixed width */
+  height: auto; /* Remove fixed height */
+  background: none; /* Remove blue background */
+  border-radius: 4px; /* Match pending-text */
+  padding: 4px 6px; /* Match pending-text */
+  height: 24px; /* Match pending-text */
+  color: #666; /* Default text color */
+}
+
+.add-friend-btn:hover {
+  background: #b3b3b3; /* Match previous hover */
+  transform: translateY(-1px); /* Match connect-btn */
+}
+
+.add-friend-btn svg {
+  color: #666; /* Match pending-text text color */
+}
+
+/* Request actions container */
+.request-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* Accept button */
+/* .accept-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #00cc00;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+} */
+
+/* .accept-btn:hover {
+  background: #00b300;
+  transform: scale(1.1);
+} */
+
+.accept-btn svg {
+  color: white;
+}
+
+/* Reject button */
+/* .reject-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #ff3333;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+} */
+
+/* .reject-btn:hover {
+  background: #e7dbdb;
+  transform: scale(1.1);
+} */
+
+.reject-btn svg {
+  color: white;
+}
+
+.add-friend-btn,
+.withdraw-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+.add-friend-btn {
+  color: #22c55e;
+}
+.add-friend-btn:hover {
+  background-color: #dcfce7;
+}
+
+.withdraw-btn {
+  color: #ef4444;
+}
+.withdraw-btn:hover {
+  background-color: #fee2e2;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem;
+  border-radius: 9999px;
+  transition: all 0.2s ease-in-out;
+}
+
+.accept-btn {
+  color: green;
+}
+
+.accept-btn:hover {
+  background-color: #d1fae5; /* light green */
+}
+
+.reject-btn {
+  color: red;
+  margin-left: 8px;
+}
+
+.reject-btn:hover {
+  background-color: #fee2e2; /* light red */
+}
+
+/* .pending-text {
+  padding: 4px 8px;
+  background-color: #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #666;
+} */
+
+.pending-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px;
+  background-color: #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #666;
+  height: 24px;
+  box-sizing: border-box;
+  text-align: center;
+  gap: 4px;
+  width: 90px;
+}
+
+.connect-btn {
+  background-color: #e6f3ff;
+  color: #2196f3;
+  border: 1px solid #2196f3;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  width: 90px;
+}
+
+.connect-btn:hover {
+  background-color: #d1e9ff;
+  color: #1976d2;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.2);
+}
+
+.connect-btn svg {
+  flex-shrink: 0;
+  stroke: currentColor;
+}
