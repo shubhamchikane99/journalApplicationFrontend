@@ -5,4 +5,5 @@ export const endPoint = {
   saveJournal: "v1/journal",
   chatMessage: "v1/chat-message",
   fileUpload: "v1/file-upload",
+  notification: "v1/notifications",
 };
