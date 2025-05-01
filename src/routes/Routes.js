@@ -7,11 +7,23 @@ import Dashboard from "../pages/Dashboard";
 import Chat from "../pages/Chat";
 import JournalEntry from "../pages/JournalEntry";
 import TicTacToe from "../pages/TicTacToe";
-import SignUpForm from "../pages/SignUpForm"
+import SignUpForm from "../pages/SignUpForm";
+import NotificationPage from "../pages/NotificationPage";
 
 const AppRoutes = [
   <Route key="login" path="/" element={<LoginForm />} />,
   <Route path="/signup" element={<SignUpForm />} />,
+
+  <Route
+    key="journal-entry"
+    path="journal-entry"
+    element={
+      <ProtectedRoute>
+        <JournalEntry />
+      </ProtectedRoute>
+    }
+  />,
+
   <Route
     key="dashboard"
     path=":username/dashboard"
@@ -30,15 +42,17 @@ const AppRoutes = [
       </ProtectedRoute>
     }
   />,
+
   <Route
-    key="journal-entry"
-    path="journal-entry"
+    key="notification"
+    path="notification"
     element={
       <ProtectedRoute>
-        <JournalEntry />
+        <NotificationPage />
       </ProtectedRoute>
     }
   />,
+
   <Route
     key="tic-tac-toe"
     path="tic-tac-toe"
