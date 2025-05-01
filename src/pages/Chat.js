@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import UserList from "../pages/UserList";
 import ChatWindow from "../pages/ChatWindow";
 import { fetchData } from "../services/apiService";
 import { endPoint } from "../services/endPoint";
+import { AuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import "../styles/Chat.css";
+import NavBar from "../components/Navbar"; // <-- import your NavBar here
 
 // Function to fetch users
 const fetchUsersData = async (
@@ -21,9 +24,8 @@ const fetchUsersData = async (
     }
 
     if (data.data) {
-      // Log the values before setting them
-      setUsers(data.data.chat || []); // Use chat list in this tab
-      setAllUsers(data.data.allUsers || []); // Store all users for another tab
+      setUsers(data.data.chat || []);
+      setAllUsers(data.data.allUsers || []);
       setRequestUsers(data.data.request || []);
     }
   } catch (err) {
@@ -33,14 +35,13 @@ const fetchUsersData = async (
 };
 
 const Chat = () => {
-  const [users, setUsers] = useState([]); // Chat users
-  const [allUsers, setAllUsers] = useState([]); // For future Request tab
-  const [requestUsers, setRequestUsers] = useState([]); // For future Request tab
+  const [users, setUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [requestUsers, setRequestUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [error, setError] = useState("");
 
-  // Fetch users when the component loads
   useEffect(() => {
     fetchUsersData(setUsers, setAllUsers, setRequestUsers, setError);
 
@@ -52,25 +53,38 @@ const Chat = () => {
     }
   }, []);
 
+  const { logout } = useContext(AuthContext); // Access user and logout
+  const navigate = useNavigate(); // For redirection
+
+  const handleLogout = () => {
+    logout(); // Clear user data
+    navigate("/"); // Redirect to Login page
+  };
+
   return (
-    <div className="chat-container">
-      {/* Display error message if there's any */}
-      {error && <div className="error-message">{error}</div>}
+    <div className="chat-page">
+      <NavBar onLogout={handleLogout} /> {/* <-- Add NavBar at the top */}
+      <div className="chat-container">
+        {/* Display error message if there's any */}
+        {error && <div className="error-message">{error}</div>}
 
-      {/* Left Side - User List */}
-      <UserList
-        users={users}
-        allUsers={allUsers} // Pass allUsers here
-        requestUsers={requestUsers}
-        selectUser={setSelectedUser}
-      />
+        {/* Left Side - User List */}
+        <UserList
+          users={users}
+          allUsers={allUsers}
+          requestUsers={requestUsers}
+          selectUser={setSelectedUser}
+        />
 
-      {/* Right Side - Chat Window */}
-      {selectedUser && currentUser ? (
-        <ChatWindow selectedUser={selectedUser} currentUser={currentUser} />
-      ) : (
-        <div className="chat-placeholder">Select a user to start chatting</div>
-      )}
+        {/* Right Side - Chat Window */}
+        {selectedUser && currentUser ? (
+          <ChatWindow selectedUser={selectedUser} currentUser={currentUser} />
+        ) : (
+          <div className="chat-placeholder">
+            Select a user to start chatting
+          </div>
+        )}
+      </div>
     </div>
   );
 };

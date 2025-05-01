@@ -218,7 +218,6 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
   // Handle rejecting friend request
   const handleRejectRequest = (requestId) => {
     if (stompClient && isConnected) {
-      
       stompClient.publish({
         destination: "/app/reject-friend-request",
         body: JSON.stringify({

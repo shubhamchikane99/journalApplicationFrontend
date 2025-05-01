@@ -1,0 +1,99 @@
+/* The main container for the notification page */
+.notification-page {
+  width: 80%;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  font-family: monospace;
+  font-size: 16px;
+  max-height: 80vh; /* Restrict the page height */
+  overflow: hidden; /* Hide overflow */
+  display: flex;
+  flex-direction: column;
+}
+
+h2 {
+  text-align: center;
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+/* Scrollable container for the notification list */
+.notification-list-container {
+  max-height: 400px; /* Limit the height of the notifications section */
+  overflow-y: auto; /* Make it scrollable if there are many notifications */
+  padding-right: 10px; /* Avoid scrollbar overlap with the content */
+  font-family: monospace;
+  font-size: 16px;
+}
+
+.notification-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Notification item style */
+.notification-item {
+  background-color: white;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease; /* Add smooth hover effect */
+}
+
+.notification-item:hover {
+  background-color: #f1f1f1; /* Light grey background on hover */
+  transform: translateY(-2px); /* Slight lift effect */
+}
+
+/* Notification text style */
+.notification-item p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.notification-item em {
+  font-style: italic;
+  color: #555;
+  font-family: monospace;
+  font-size: 16px;
+}
+
+/* Time style for each notification */
+.notification-time {
+  font-size: 12px;
+  color: #888;
+  display: block;
+  margin-top: 10px;
+}
+
+/* For better responsiveness on mobile */
+@media (max-width: 768px) {
+  .notification-page {
+    width: 100%;
+    padding: 10px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  .notification-item {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .notification-time {
+    font-size: 10px;
+  }
+}
+
+.notification-item.selected {
+  background-color: #e6f7ff; /* light blue background */
+  border-left: 4px solid #007bff;
+  font-weight: bold;
+}
