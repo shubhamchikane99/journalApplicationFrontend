@@ -6,13 +6,7 @@ import SockJS from "sockjs-client";
 import { fetchData, postData } from "../services/apiService";
 import "../styles/NavBar.css";
 import Loader from "../components/Loader";
-import {
-  FaBell,
-  FaComments,
-  FaBookOpen,
-  FaChartLine,
-  FaGamepad,
-} from "react-icons/fa"; // 🔔 Bell Icon
+import { FaBell, FaComments, FaBookOpen, FaChartLine } from "react-icons/fa"; // 🔔 Bell Icon
 
 const NavBar = ({ onLogout }) => {
   const loggedInUser = JSON.parse(localStorage.getItem("user"));
@@ -23,6 +17,9 @@ const NavBar = ({ onLogout }) => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [unreadNotificatiomCount, setUnreadNotificatiomCount] = useState(0);
+  const dashboardPath = `/${loggedInUser.userName
+    .trim()
+    .toLowerCase()}/dashboard/`;
 
   let flagForCallingUnreadApi = useRef(0); // useRef instead of simple variable
 
@@ -138,7 +135,12 @@ const NavBar = ({ onLogout }) => {
         {/* // <Link to="/journal-entry">Journal Entry</Link> */}
 
         <div className="journal-bell">
-          <Link to="/journal-entry" className="journal-link">
+          <Link
+            to="/journal-entry"
+            className={`journal-link ${
+              location.pathname === "/journal-entry" ? "active-link" : ""
+            }`}
+          >
             <FaBookOpen size={18} /> {/* Smaller Bell */}
             <span className="journal-text">Journal Entry</span>
           </Link>
@@ -146,8 +148,10 @@ const NavBar = ({ onLogout }) => {
 
         <div className="dashboard-bell">
           <Link
-            to={`/${loggedInUser.userName.trim().toLowerCase()}/dashboard/`}
-            className="dashboard-link"
+            to={dashboardPath}
+            className={`dashboard-link ${
+              location.pathname.includes("/dashboard") ? "active-link" : ""
+            }`}
           >
             <FaChartLine size={18} /> {/* Smaller Bell */}
             <span className="dashboard-text">Dashboard</span>
@@ -155,7 +159,12 @@ const NavBar = ({ onLogout }) => {
         </div>
 
         <div className="chat-bell">
-          <Link to="/chat" className="chat-link">
+          <Link
+            to="/chat"
+            className={`chat-link ${
+              location.pathname === "/chat" ? "active-link" : ""
+            }`}
+          >
             <FaComments size={18} /> {/* Smaller Bell */}
             <span className="chat-text">Chat</span>
             {unreadCount > 0 && (
@@ -166,7 +175,12 @@ const NavBar = ({ onLogout }) => {
 
         {/* Notification Bell with Text */}
         <div className="notification-bell">
-          <Link to="/notification" className="notification-link">
+          <Link
+            to="/notification"
+            className={`notification-link ${
+              location.pathname === "/notification" ? "active-link" : ""
+            }`}
+          >
             <FaBell size={18} /> {/* Smaller Bell */}
             <span className="notification-text">Notification</span>
             {unreadNotificatiomCount > 0 && (
@@ -178,17 +192,10 @@ const NavBar = ({ onLogout }) => {
         </div>
 
         {/* <Link to="/chat">Chat {unreadCount > 0 && `(${unreadCount})`}</Link> */}
-
-        <div className="tic-bell">
-          <Link to="/tic-tac-toe" className="tic-link">
-            <FaGamepad size={18} /> {/* Smaller Bell */}
-            <span className="tic-text">Tic Tac Toe</span>
-          </Link>
-        </div>
+        <button className="logout-btn" onClick={fetchLoginData}>
+          Logout
+        </button>
       </div>
-      <button className="logout-btn" onClick={fetchLoginData}>
-        Logout
-      </button>
     </nav>
   );
 };

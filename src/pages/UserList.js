@@ -77,8 +77,6 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
         setIsConnected(true);
         setError(null);
 
-        console.log("web socker in connect");
-
         client.subscribe(`/topic/private-unread-msg/${userId}`, (message) => {
           const senderId = message.body;
 
@@ -105,7 +103,6 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
         client.subscribe(`/topic/user-request-list/${userId}`, (message) => {
           const requestUserList = JSON.parse(message.body);
           setRequestCounts((prevCount) => prevCount + 1);
-          console.log("call is here");
           setRequestUserList(requestUserList);
         });
 
@@ -298,6 +295,18 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
               {/* Show only in Chat Tab */}
               {activeTab === "chat" && (
                 <>
+                  {/* Typing indicator */}
+                  {typingUsers[user.id] && (
+                    <span className="typing-indicator">✍️ typing...</span>
+                  )}
+
+                  {/* Unread count */}
+                  {unreadCounts[user.id] > 0 && (
+                    <span className="unread-count">
+                      {unreadCounts[user.id]}
+                    </span>
+                  )}
+
                   {/* Show online/offline status */}
                   {Array.isArray(onlineUsers) && onlineUsers.length > 0 ? (
                     onlineUsers.includes(user.id) ? (
@@ -309,18 +318,6 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
                     <span className="online-status"></span>
                   ) : (
                     <span className="offline-status"></span>
-                  )}
-
-                  {/* Typing indicator */}
-                  {typingUsers[user.id] && (
-                    <span className="typing-indicator">✍️ typing...</span>
-                  )}
-
-                  {/* Unread count */}
-                  {unreadCounts[user.id] > 0 && (
-                    <span className="unread-count">
-                      {unreadCounts[user.id]}
-                    </span>
                   )}
                 </>
               )}
