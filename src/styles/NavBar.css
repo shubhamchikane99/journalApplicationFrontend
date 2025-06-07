@@ -1,17 +1,34 @@
+/* Base styles (Mobile-first) */
 .navbar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: white;
-  border-bottom: 1px solid #ccc;
-  padding: 10px 20px;
+  flex-direction: row; /* Single row for mobile */
+  justify-content: space-between; /* Space links and logout button */
+  align-items: center; /* Vertically center items */
+  background: #ffffff; /* Match journal, chat, user list */
+  border-bottom: 1px solid #e2e8f0; /* Lighter border */
+  padding: 8px 12px; /* Adjusted for mobile */
   font-family: monospace;
-  font-size: 16px;
+  font-size: 15px; /* Slightly smaller for mobile */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
+/* Nav links container */
 .nav-links {
   display: flex;
-  gap: 15px;
+  flex-direction: row;
+  flex-wrap: nowrap; /* Prevent wrapping to keep single row */
+  gap: 8px; /* Reduced for mobile */
+  justify-content: flex-start;
+  align-items: center;
+  overflow-x: auto; /* Scroll if links overflow */
+  scrollbar-width: thin;
+  padding-top: 10px;
+  scrollbar-color: #a0aec0 #f7fafc; /* Match other components */
+}
+.nav-links > div {
+  display: flex; /* ✅ Make children flexible boxes */
+  align-items: center;
+  gap: 5px;
 }
 
 .nav-links a {
@@ -33,14 +50,25 @@
   width: auto;
   font-family: monospace;
   font-size: 16px;
+  margin-top: 10px;
 }
-.notification-bell {
+
+/* Unified Bell Styles */
+.notification-bell,
+.journal-bell,
+.dashboard-bell,
+.chat-bell,
+.tic-bell {
   position: relative;
   display: inline-block;
   margin-right: 15px;
 }
 
-.notification-link {
+.notification-link,
+.journal-link,
+.dashboard-link,
+.chat-link,
+.tic-link {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -49,85 +77,16 @@
   position: relative;
 }
 
-.notification-text {
-  font-size: 14px; /* Adjust if you want smaller or bigger text */
+.notification-text,
+.journal-text,
+.dashboard-text,
+.chat-text,
+.tic-text {
+  font-size: 14px;
   font-weight: 500;
 }
 
-.notification-badge {
-  position: absolute;
-  top: -5px;
-  right: -12px;
-  background: red;
-  color: white;
-  border-radius: 50%;
-  padding: 2px 6px;
-  font-size: 10px;
-  font-weight: bold;
-}
-/* journal css */
-.journal-bell {
-  position: relative;
-  display: inline-block;
-  margin-right: 15px;
-}
-
-.journal-link {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: inherit;
-  text-decoration: none;
-  position: relative;
-}
-
-.journal-text {
-  font-size: 14px; /* Adjust if you want smaller or bigger text */
-  font-weight: 500;
-}
-
-/* dashboard css */
-.dashboard-bell {
-  position: relative;
-  display: inline-block;
-  margin-right: 15px;
-}
-
-.dashboard-link {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: inherit;
-  text-decoration: none;
-  position: relative;
-}
-
-.dashboard-text {
-  font-size: 14px; /* Adjust if you want smaller or bigger text */
-  font-weight: 500;
-}
-
-/* chat css */
-.chat-bell {
-  position: relative;
-  display: inline-block;
-  margin-right: 15px;
-}
-
-.chat-link {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: inherit;
-  text-decoration: none;
-  position: relative;
-}
-
-.chat-text {
-  font-size: 14px; /* Adjust if you want smaller or bigger text */
-  font-weight: 500;
-}
-
+.notification-badge,
 .chat-badge {
   position: absolute;
   top: -5px;
@@ -140,23 +99,46 @@
   font-weight: bold;
 }
 
-/* tic css */
-.tic-bell {
-  position: relative;
-  display: inline-block;
-  margin-right: 15px;
+/* Tablet view */
+@media (min-width: 600px) {
+  .navbar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .nav-links {
+    width: auto;
+    margin-top: 0;
+  }
+
+  .logout-btn {
+    margin-top: 0;
+  }
 }
 
-.tic-link {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: inherit;
-  text-decoration: none;
-  position: relative;
+.navbar {
+  -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
 }
 
-.tic-text {
-  font-size: 14px; /* Adjust if you want smaller or bigger text */
-  font-weight: 500;
+/* Desktop view */
+@media (min-width: 1024px) {
+  .navbar {
+    padding: 10px 40px;
+  }
+
+  .nav-links {
+    gap: 20px;
+  }
+
+  .logout-btn {
+    padding: 10px 20px;
+  }
+}
+
+/* Active link styling */
+.nav-links a.active-link {
+  background-color: #e0f2fe; /* light blue background */
+  color: #2563eb; /* vibrant blue text */
+  border-radius: 6px;
 }

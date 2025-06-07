@@ -78,9 +78,13 @@ const Chat = () => {
 
         {/* Right Side - Chat Window */}
         {selectedUser && currentUser ? (
-          <ChatWindow selectedUser={selectedUser} currentUser={currentUser} />
+          <ChatWindow
+            selectedUser={selectedUser}
+            currentUser={currentUser}
+            setSelectedUser={setSelectedUser}
+          />
         ) : (
-          <div className="chat-placeholder">
+          <div className="chat-placeholder" style={{ fontFamily: "monospace" }}>
             Select a user to start chatting
           </div>
         )}
