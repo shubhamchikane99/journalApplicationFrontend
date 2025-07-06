@@ -106,7 +106,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
               setMessages((prevMessages) =>
                 prevMessages.map((msg) =>
                   msg.id === receivedMessage.id
-                    ? { ...msg, status: "SEEN" }
+                    ? { ...msg, status: '3' }
                     : msg
                 )
               );
@@ -207,10 +207,11 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
     setStompClient(client);
 
     // 🔴 Detect Tab Close or Refresh (Mark User Offline)
-    const handleBeforeUnload = () => {
-      fetchData(endPoint.chatMessage + `/${userId}/offline`);
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    // console.log("offline api calling")
+    // const handleBeforeUnload = () => {
+    //   fetchData(endPoint.chatMessage + `/${userId}/offline`);
+    // };
+    // window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
       if (client) {
@@ -410,7 +411,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
         receiverId: selectedUser.id, // Ensure correct receiver ID
         content: messageContent, // Use file URL if available,
         type: messageType, // Determine type
-        status: "SENT",
+        status: 0,
         isEdited: editingMessageId?.id ? 1 : 0,
         replyToMessageId: replyToMessage?.id || null, // <-- Add this line
         insertDateTime: formattedDate, // Add timestamp
@@ -744,13 +745,13 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
                   <div className="message-time">
                     {formatTime(msg.insertDateTime)}
                     {msg.senderId === currentUser.id &&
-                      msg.status === "SENT" &&
+                      msg.status === '0' &&
                       " ✓"}
                     {msg.senderId === currentUser.id &&
-                      msg.status === "DELIVERED" &&
+                      msg.status === '1' &&
                       " ✓✓"}
                     {msg.senderId === currentUser.id &&
-                      msg.status === "SEEN" &&
+                      msg.status === '2' &&
                       " 👀"}
                     {msg.isEdited === 1 && " (edited)"}
                   </div>
