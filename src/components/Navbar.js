@@ -93,6 +93,12 @@ const NavBar = ({ onLogout }) => {
           }
         });
 
+        //Unread Count update as read on chat tap
+        client.subscribe(`/topic/read-msg/${userId}`, (message) => {
+          const remainingMsgCount = JSON.parse(message.body);
+            setUnreadCount(remainingMsgCount);
+        });
+
         client.subscribe(`/topic/unread-notification/${userId}`, (message) => {
           const notifCount = JSON.parse(message.body);
 
