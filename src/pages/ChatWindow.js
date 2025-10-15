@@ -11,6 +11,8 @@ import moment from "moment"; // Import Moment.js
 //import FileUpload from "../components/FileUpload";
 import "../styles/ChatWindow.css";
 import { FaArrowLeft } from "react-icons/fa";
+import { REACT_APP_BACKEND_URL } from "../services/config";
+import Loader from "../components/Loader";
 
 const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
   const [messages, setMessages] = useState([]);
@@ -29,6 +31,13 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
   const [openMenuIndex, setOpenMenuIndex] = useState(null);
   const [replyToMessage, setReplyToMessage] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState(null);
+  const [showChatOptions, setShowChatOptions] = useState(null);
+
+  //Backgroup image
+  const [chatBackground, setChatBackground] = useState(null); // stores background URL
+  const [previewBg, setPreviewBg] = useState(null);
+  const [selectedBgFile, setSelectedBgFile] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const messageRefs = useRef({});
   const [selectedMessageId, setSelectedMessageId] = useState(null);
@@ -41,7 +50,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
     if (!currentUser || !selectedUser) return;
 
     const userId = currentUser.id; // Use user ID directly
-    const apiUrl = process.env.REACT_APP_BACKEND_URL;
+    const apiUrl = REACT_APP_BACKEND_URL;
     const socket = new SockJS(`${apiUrl}/ws`);
     //const socket = new SockJS("https://journalapplication-production-8570.up.railway.app/ws");
 
@@ -105,9 +114,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
             ) {
               setMessages((prevMessages) =>
                 prevMessages.map((msg) =>
-                  msg.id === receivedMessage.id
-                    ? { ...msg, status: '3' }
-                    : msg
+                  msg.id === receivedMessage.id ? { ...msg, status: "3" } : msg
                 )
               );
 
@@ -193,7 +200,8 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
 
       onDisconnect: () => {
         setIsConnected(false);
-        setError("Disconnected. Reconnecting...");
+        // setError("Disconnected. Reconnecting...");
+         setError("");
         // 🔴 Mark user as offline in DB
         // fetchData(endPoint.chatMessage`/${userId}/offline`);
       },
@@ -609,8 +617,125 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
     }
   };
 
+  //file upload dropdown closed const menuRef = useRef(null);
+  const menuRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowChatOptions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleBackgroundUpload = (e) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const file = e.target.files[0];
+    setSelectedBgFile(file); // Store selected file
+    setPreviewBg(URL.createObjectURL(file)); // Show preview
+    setShowChatOptions(false); // Hide menu
+  };
+
+  // When user clicks "Done"
+  const handleSaveBackground = async () => {
+    if (!selectedBgFile) {
+      console.error("No file selected");
+      return;
+    }
+
+    // Show preview immediately as background
+    const previewUrl = URL.createObjectURL(selectedBgFile);
+    setChatBackground(previewUrl);
+    setPreviewBg(null); // Close preview modal
+
+    // Upload file to server
+    const formData = new FormData();
+    formData.append("file", selectedBgFile);
+
+    try {
+      const response = await postData(
+        endPoint.fileUpload + "/upload",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+
+      if (response?.data) {
+        // Save in DB
+        const chatThemPayload = {
+          userId: currentUser.id, // Ensure correct sender ID
+          bgImgUserId: selectedUser.id,
+          imgUrl: response.data,
+          isActive: 1,
+        };
+        const data = await postData(`${endPoint.chatTheme}`, chatThemPayload);
+
+        if (data.data) {
+          setChatBackground(data.data);
+        }
+      }
+    } catch (error) {
+      console.error("Background upload failed:", error);
+    }
+  };
+
+  // Cancel preview
+  const handleCancelPreview = () => {
+    setPreviewBg(null);
+    setSelectedBgFile(null);
+  };
+
+  //Fetch User Chat Background Image
+  useEffect(() => {
+    const fetchUserBackgroundImage = async () => {
+       setLoading(true);
+      if (!selectedUser || !currentUser) return;
+
+      try {
+        const response = await fetchData(
+          endPoint.chatTheme +
+            `/by-user?userId=${currentUser.id}&selectUserId=${selectedUser.id}`
+        );
+
+        if (response.error || response.data?.error) {
+          setError(response.data?.errorMessage || "Failed to fetch messages.");
+          setChatBackground("");
+          return;
+        }
+
+        const imgUrl = response.data?.imgUrl;
+
+        if (imgUrl && imgUrl.trim() !== "") {
+          setChatBackground(imgUrl);
+        } else {
+          setChatBackground(""); // 🧹 clear if no image in DB
+        }
+         setLoading(false);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      }
+    };
+
+    fetchUserBackgroundImage();
+  }, [selectedUser, currentUser]); // Re-fetch when user changes
+
   return (
-    <div className="chat-window">
+    <div
+      className="chat-window"
+      style={{
+        background: previewBg
+          ? `url(${previewBg}) center/cover no-repeat`
+          : chatBackground
+          ? `url(${chatBackground}) center/cover no-repeat`
+          : "#fff", // default white
+      }}
+    >
+      {loading && <Loader />}
       {/* Delete popup (add this just below chat window) */}
       {deletePopup.show && (
         <div className="popup-backdrop">
@@ -626,11 +751,25 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
           </div>
         </div>
       )}
-      <div className="chat-header">
-        <h3>
+      <div
+        className="chat-header"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "10px",
+          borderBottom: "1px solid #ccc",
+          position: "relative",
+        }}
+      >
+        <h3 style={{ margin: 0, display: "flex", alignItems: "center" }}>
           {/* Back icon shown only on mobile */}
           {selectedUser && (
-            <span className="back-arrow" onClick={() => setSelectedUser(null)}>
+            <span
+              className="back-arrow"
+              onClick={() => setSelectedUser(null)}
+              style={{ marginRight: "10px", cursor: "pointer" }}
+            >
               <FaArrowLeft size={24} />
             </span>
           )}
@@ -645,7 +784,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
               : " ❌ (Offline)"
             : " ❌ (Offline)"}
           {isTyping && (
-            <div className="typing-indicator">
+            <div className="typing-indicator" style={{ marginLeft: "10px" }}>
               <span className="typing-dot"></span>
               <span className="typing-dot"></span>
               <span className="typing-dot"></span>
@@ -653,6 +792,35 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
             </div>
           )}
         </h3>
+
+        {/* Right side: 3-dot menu */}
+        {/* 3-dot menu */}
+        <div style={{ position: "relative" }} ref={menuRef}>
+          <span
+            className="chat-options-menu"
+            onClick={() => setShowChatOptions(!showChatOptions)}
+            style={{ cursor: "pointer", fontSize: "20px" }}
+          >
+            ⋮
+          </span>
+
+          {/* Dropdown menu */}
+          {showChatOptions && (
+            <div className="chat-options-dropdown">
+              <button onClick={() => fileInputRef.current.click()}>
+                Chat theme
+              </button>
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                ref={fileInputRef}
+                onChange={handleBackgroundUpload}
+              />
+              {/* You can add more buttons here like "Block user", "Delete chat" */}
+            </div>
+          )}
+        </div>
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -679,11 +847,30 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
               msg.isDelete !== 1 &&
               msg.isDelete !== 2 && (
                 <div className="message-action-menu">
-                  <button onClick={() => handleReply(msg)}>Reply</button>
+                  <button
+                    style={{ fontSize: "14px", fontFamily: "monospace" }}
+                    onClick={() => handleReply(msg)}
+                  >
+                    Reply
+                  </button>
                   {msg.senderId === currentUser.id && (
                     <>
-                      <button onClick={() => handleEdit(msg)}>Edit</button>
-                      <button onClick={() => openDeletePopup(msg.id)}>
+                      <button
+                        style={{
+                          fontSize: "14px",
+                          fontFamily: "monospace",
+                        }}
+                        onClick={() => handleEdit(msg)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        style={{
+                          fontSize: "14px",
+                          fontFamily: "monospace",
+                        }}
+                        onClick={() => openDeletePopup(msg.id)}
+                      >
                         Delete
                       </button>
                     </>
@@ -745,13 +932,13 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
                   <div className="message-time">
                     {formatTime(msg.insertDateTime)}
                     {msg.senderId === currentUser.id &&
-                      msg.status === '0' &&
+                      msg.status === "0" &&
                       " ✓"}
                     {msg.senderId === currentUser.id &&
-                      msg.status === '1' &&
+                      msg.status === "1" &&
                       " ✓✓"}
                     {msg.senderId === currentUser.id &&
-                      msg.status === '2' &&
+                      msg.status === "2" &&
                       " 👀"}
                     {msg.isEdited === 1 && " (edited)"}
                   </div>
@@ -763,72 +950,86 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
       </div>
 
       <div className="input-box" onPaste={handlePaste}>
-        <button
-          id="emoji-button"
-          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-        >
-          😀
-        </button>
-
-        {showEmojiPicker && (
-          <div className="emoji-picker" ref={emojiPickerRef}>
-            <Picker data={data} onEmojiSelect={addEmoji} />
-          </div>
-        )}
-
-        {mediaPreview ? (
-          <div className="media-preview">
-            {mediaPreview.type.startsWith("video") ? (
-              <video src={mediaPreview.url} width="100" controls />
-            ) : (
-              <img src={mediaPreview.url} width="100" alt="Preview" />
-            )}
-            <button
-              className="remove-media"
-              onClick={() => setMediaPreview(null)}
-            >
-              ✖
+        {previewBg ? (
+          <div className="background-preview-controls">
+            <button className="done-btn" onClick={handleSaveBackground}>
+              Done
+            </button>
+            <button className="cancel-btn" onClick={handleCancelPreview}>
+              Cancel
             </button>
           </div>
         ) : (
+          // Normal input box
           <>
-            {replyToMessage && (
-              <div className="reply-preview">
-                <div className="reply-message">
-                  <strong>Replying to {replyToMessage.senderName}:</strong>{" "}
-                  {replyToMessage.content}
-                </div>
-                <button
-                  className="close-reply"
-                  onClick={() => setReplyToMessage(null)}
-                >
-                  ❌
-                </button>
+            <button
+              id="emoji-button"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            >
+              😀
+            </button>
+
+            {showEmojiPicker && (
+              <div className="emoji-picker" ref={emojiPickerRef}>
+                <Picker data={data} onEmojiSelect={addEmoji} />
               </div>
             )}
-            <textarea
-              value={message}
-              onChange={handleMessageChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Type a message..."
-              className="chat-textarea"
-              rows={1}
+
+            {mediaPreview ? (
+              <div className="media-preview">
+                {mediaPreview.type.startsWith("video") ? (
+                  <video src={mediaPreview.url} width="100" controls />
+                ) : (
+                  <img src={mediaPreview.url} width="100" alt="Preview" />
+                )}
+                <button
+                  className="remove-media"
+                  onClick={() => setMediaPreview(null)}
+                >
+                  ✖
+                </button>
+              </div>
+            ) : (
+              <>
+                {replyToMessage && (
+                  <div className="reply-preview">
+                    <div className="reply-message">
+                      <strong>Replying to {replyToMessage.senderName}:</strong>{" "}
+                      {replyToMessage.content}
+                    </div>
+                    <button
+                      className="close-reply"
+                      onClick={() => setReplyToMessage(null)}
+                    >
+                      ❌
+                    </button>
+                  </div>
+                )}
+                <textarea
+                  value={message}
+                  onChange={handleMessageChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type a message..."
+                  className="chat-textarea"
+                  rows={1}
+                />
+              </>
+            )}
+
+            <button onClick={() => fileInputRef.current.click()}>📎</button>
+            <input
+              type="file"
+              accept="image/*,video/*"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
             />
+
+            <button onClick={sendMessage} disabled={!isConnected}>
+              Send
+            </button>
           </>
         )}
-
-        <button onClick={() => fileInputRef.current.click()}>📎</button>
-        <input
-          type="file"
-          accept="image/*,video/*"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-        />
-
-        <button onClick={sendMessage} disabled={!isConnected}>
-          Send
-        </button>
       </div>
     </div>
   );
