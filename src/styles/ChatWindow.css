@@ -23,6 +23,12 @@
   font-size: 1.2rem;
 }
 
+.chat-options-menu {
+  cursor: pointer;
+  font-size: 20px;
+  /* right is automatically handled by flex */
+}
+
 .back-arrow {
   font-size: 1.5rem;
   cursor: pointer;
@@ -482,14 +488,92 @@ button:disabled {
 }
 
 /* Popup Backdrop */
+/* Backdrop */
 .popup-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 999;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+/* Popup container */
+.delete-popup {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 20px 25px;
+  width: 320px;
+  max-width: 90%;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  font-family: Arial, sans-serif;
+  animation: scaleUp 0.2s ease-in-out;
+}
+
+/* Popup text */
+.delete-popup p {
+  font-family: monospace;
+  font-size: 16px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Buttons */
+.delete-popup button {
+  width: 100%;
+  padding: 10px 0;
+  margin-bottom: 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-popup button:first-child {
+  background-color: #0b8457; /* WhatsApp green */
+  color: #fff;
+}
+
+.delete-popup button:nth-child(2) {
+  background-color: #0b8457;
+  color: #fff;
+}
+
+.delete-popup button:last-child {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.delete-popup button:hover {
+  opacity: 0.85;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* On mobile, show the back arrow */
@@ -506,7 +590,8 @@ button:disabled {
   padding: 8px 12px;
   margin-bottom: 6px;
   border-radius: 7px; /* WhatsApp rounded corners */
-  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Roboto, sans-serif; /* WhatsApp font stack */
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Roboto,
+    sans-serif; /* WhatsApp font stack */
   color: #1a1a1a;
   cursor: pointer;
   transition: background 0.2s ease;
@@ -549,6 +634,7 @@ button:disabled {
 /* Mobile: <600px */
 @media (max-width: 600px) {
   .replied-message {
+    font-family: monospace;
     font-size: 13px;
     max-width: 100%; /* Full width for mobile */
     padding: 6px 10px;
@@ -582,6 +668,7 @@ button:disabled {
 /* Tablet: 601px–1023px */
 @media (min-width: 601px) and (max-width: 1023px) {
   .replied-message {
+    font-family: monospace;
     font-size: 14px;
     max-width: 95%; /* Slightly constrained */
     padding: 8px 12px;
@@ -599,6 +686,7 @@ button:disabled {
 /* Desktop: ≥1024px */
 @media (min-width: 1024px) {
   .replied-message {
+    font-family: monospace;
     font-size: 15px;
     max-width: 80%; /* Constrained for desktop */
     padding: 10px 14px;
@@ -623,4 +711,77 @@ button:disabled {
 .replied-message::-webkit-scrollbar-thumb {
   background: #00a884;
   border-radius: 3px;
+}
+
+.chat-options-dropdown {
+  position: absolute;
+  right: 10px;
+  top: 40px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 180px;
+  overflow: hidden;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.chat-option-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.chat-option-item:hover {
+  background-color: #f5f5f5;
+  color: #007bff; /* highlight color on hover */
+}
+
+/*  bg image preview */
+/* Chat background preview controls */
+.background-preview-controls {
+  display: flex;
+  justify-content: center;
+  gap: 50px;
+  padding: 15px;
+}
+
+/* Done button */
+.background-preview-controls .done-btn {
+  padding: 8px 16px;
+  width: 100px;
+  background-color: #4caf50;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.background-preview-controls .done-btn:hover {
+  background-color: #45a049;
+}
+
+/* Cancel button */
+.background-preview-controls .cancel-btn {
+  padding: 8px 16px;
+  width: 100px;
+  background-color: #f44336;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.background-preview-controls .cancel-btn:hover {
+  background-color: #d32f2f;
 }

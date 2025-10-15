@@ -1,11 +1,10 @@
 /* Ensure this meta tag is in your HTML <head> to fix mobile scaling issues */
 
-
 /* Container for the entire user list */
 .user-list-container {
   width: 100%;
   max-width: 340px;
-  background: linear-gradient(145deg, #ffffff, #f0f2f5);
+  background: #f5f3ff;
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -102,6 +101,39 @@
   background: #f8f9fa;
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+@keyframes chatFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Apply animation to user items */
+.user-item {
+  animation: chatFadeInUp 0.35s ease both;
+}
+
+/* Slight stagger effect to look natural (like WhatsApp) */
+.user-item:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.user-item:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.user-item:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.user-item:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.user-item:nth-child(5) {
+  animation-delay: 0.25s;
 }
 
 /* User name */
@@ -442,5 +474,62 @@
     font-size: 12px;
     padding: 4px 6px;
     width: 90px;
+  }
+
+  /* archive chat css  */
+  .menu-container {
+    position: relative; /* reference for absolute dropdown */
+    display: inline-block;
+  }
+
+  .menu-dots {
+    cursor: pointer;
+    font-size: 20px;
+    padding: 4px;
+    border-radius: 50%;
+    transition: background 0.2s;
+  }
+
+  .menu-dots:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .menu-dropdown {
+    position: absolute;
+    top: 40%; /* slightly below the dots */
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+    z-index: 100;
+    min-width: 160px;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  /* Show the dropdown when active */
+  .menu-container .menu-dropdown {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Buttons inside dropdown */
+  .menu-dropdown button {
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .menu-dropdown button:hover {
+    background-color: #f0f0f0;
   }
 }

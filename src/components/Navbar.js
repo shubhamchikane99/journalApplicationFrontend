@@ -7,6 +7,8 @@ import { fetchData, postData } from "../services/apiService";
 import "../styles/NavBar.css";
 import Loader from "../components/Loader";
 import { FaBell, FaComments, FaBookOpen, FaChartLine } from "react-icons/fa"; // 🔔 Bell Icon
+import { REACT_APP_BACKEND_URL } from "../services/config";
+
 
 const NavBar = ({ onLogout }) => {
   const loggedInUser = JSON.parse(localStorage.getItem("user"));
@@ -75,7 +77,7 @@ const NavBar = ({ onLogout }) => {
   // Web socket connect for msg count update in real-time
   useEffect(() => {
     const userId = loggedInUser.id;
-    const apiUrl = process.env.REACT_APP_BACKEND_URL;
+    const apiUrl = REACT_APP_BACKEND_URL;
     const socket = new SockJS(`${apiUrl}/ws`);
     //const socket = new SockJS("https://journalapplication-production-8570.up.railway.app/ws");
     const client = new Client({
@@ -108,7 +110,8 @@ const NavBar = ({ onLogout }) => {
 
       onDisconnect: () => {
         setIsConnected(false);
-        setError("Disconnected. Reconnecting...");
+        // setError("Disconnected. Reconnecting...");
+         setError("");
       },
 
       onStompError: (frame) => {
@@ -140,7 +143,7 @@ const NavBar = ({ onLogout }) => {
       <div className="nav-links">
         {/* // <Link to="/journal-entry">Journal Entry</Link> */}
 
-        <div className="journal-bell">
+         < div className="journal-bell">
           <Link
             to="/journal-entry"
             className={`journal-link ${

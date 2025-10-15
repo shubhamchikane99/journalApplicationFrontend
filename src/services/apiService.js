@@ -1,8 +1,9 @@
 import axios from "axios";
+import { REACT_APP_BACKEND_URL } from "./config";
 
 // Axios instance with baseURL from .env file
 const api = axios.create({
-  baseURL: process.env.REACT_APP_BACKEND_URL, // Ensure this is set correctly
+  baseURL: REACT_APP_BACKEND_URL, // Ensure this is set correctly
  // withCredentials: true, // Allow cookies and Authorization headers
 });
 

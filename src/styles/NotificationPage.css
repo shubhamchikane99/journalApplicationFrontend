@@ -4,15 +4,20 @@
   max-width: 800px;
   margin: 20px auto;
   padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  font-family: monospace;
+  background: #f5f3ff; /* soft background matching ThoughtConnect */
+  border-radius: 12px;
+  font-family: "Segoe UI", sans-serif;
   font-size: 16px;
   max-height: 85vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.notification-page p {
+  font-family: monospace;
 }
 
 /* Page heading */
