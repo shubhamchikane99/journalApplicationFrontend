@@ -1,20 +1,27 @@
+/* Ensure this meta tag is in your HTML <head> to fix mobile scaling issues */
+
 /* Container for the entire user list */
 .user-list-container {
-  width: 340px;
-  background: linear-gradient(145deg, #ffffff, #f0f2f5);
-  padding: 16px;
+  width: 100%;
+  max-width: 340px;
+  background: #f5f3ff;
+  padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border: 1px solid #e0e4e8;
+  margin: 0 auto;
+  font-family: monospace;
+  font-size: 16px;
+  box-sizing: border-box;
 }
 
 /* Tabs container */
 .tabs-container {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
   background: #ffffff;
-  padding: 6px;
+  padding: 0.5rem;
   border-radius: 8px;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -22,12 +29,12 @@
 /* Tab buttons */
 .tab-button {
   flex: 1;
-  padding: 8px 12px;
+  padding: 0.5rem 0.75rem;
   border: none;
   background: #e8ecef;
   color: #333;
   font-weight: 500;
-  font-size: 14px;
+  font-size: 0.9rem;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -45,9 +52,9 @@
 
 /* No users message */
 .no-users {
-  padding: 12px;
+  padding: 0.75rem;
   color: #666;
-  font-size: 14px;
+  font-size: 0.9rem;
   text-align: center;
   background: #f8f9fa;
   border-radius: 8px;
@@ -55,15 +62,15 @@
 
 /* Scrollable user list */
 .user-list-scroll {
-  max-height: 420px;
+  max-height: 60vh;
   overflow-y: auto;
-  padding-right: 8px;
+  padding-right: 0.5rem;
   scrollbar-width: thin;
   scrollbar-color: #c0c4cc #f0f2f5;
 }
 
 .user-list-scroll::-webkit-scrollbar {
-  width: 6px;
+  width: 0.4rem;
 }
 
 .user-list-scroll::-webkit-scrollbar-track {
@@ -80,11 +87,11 @@
 .user-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
   background: #ffffff;
   border-radius: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
   border: 1px solid #e8ecef;
@@ -96,10 +103,43 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
+@keyframes chatFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Apply animation to user items */
+.user-item {
+  animation: chatFadeInUp 0.35s ease both;
+}
+
+/* Slight stagger effect to look natural (like WhatsApp) */
+.user-item:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.user-item:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.user-item:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.user-item:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.user-item:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
 /* User name */
 .user-name {
   flex: 1;
-  font-size: 14px;
+  font-size: 0.9rem;
   font-weight: 500;
   color: #333;
 }
@@ -107,8 +147,8 @@
 /* Online/offline status */
 .online-status,
 .offline-status {
-  width: 8px;
-  height: 8px;
+  width: 0.5rem;
+  height: 0.5rem;
   border-radius: 50%;
   display: inline-block;
 }
@@ -125,7 +165,7 @@
 
 /* Typing indicator */
 .typing-indicator {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #666;
   font-style: italic;
 }
@@ -134,11 +174,11 @@
 .unread-count {
   background: #25d366;
   color: white;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   border-radius: 12px;
-  padding: 4px 8px;
-  min-width: 20px;
+  padding: 0.25rem 0.5rem;
+  min-width: 1.25rem;
   text-align: center;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
@@ -148,74 +188,55 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: auto; /* Remove fixed width */
-  height: auto; /* Remove fixed height */
-  background: none; /* Remove blue background */
-  border-radius: 4px; /* Match pending-text */
-  padding: 4px 6px; /* Match pending-text */
-  height: 24px; /* Match pending-text */
-  color: #666; /* Default text color */
+  width: auto;
+  height: auto;
+  background: none;
+  border-radius: 4px;
+  padding: 0.25rem 0.4rem;
+  height: 1.5rem;
+  color: #666;
 }
 
 .add-friend-btn:hover {
-  background: #b3b3b3; /* Match previous hover */
-  transform: translateY(-1px); /* Match connect-btn */
+  background: #b3b3b3;
+  transform: translateY(-1px);
 }
 
 .add-friend-btn svg {
-  color: #666; /* Match pending-text text color */
+  color: #666;
 }
 
 /* Request actions container */
 .request-actions {
   display: flex;
-  gap: 6px;
+  gap: 0.4rem;
 }
 
-/* Accept button */
-/* .accept-btn {
+/* Action buttons */
+.action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: #00cc00;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.3s ease;
-} */
-
-/* .accept-btn:hover {
-  background: #00b300;
-  transform: scale(1.1);
-} */
-
-.accept-btn svg {
-  color: white;
+  padding: 0.3rem;
+  border-radius: 9999px;
+  transition: all 0.2s ease-in-out;
 }
 
-/* Reject button */
-/* .reject-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: #ff3333;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.3s ease;
-} */
+.accept-btn {
+  color: green;
+}
 
-/* .reject-btn:hover {
-  background: #e7dbdb;
-  transform: scale(1.1);
-} */
+.accept-btn:hover {
+  background-color: #d1fae5;
+}
 
-.reject-btn svg {
-  color: white;
+.reject-btn {
+  color: red;
+  margin-left: 0.5rem;
+}
+
+.reject-btn:hover {
+  background-color: #fee2e2;
 }
 
 .add-friend-btn,
@@ -231,6 +252,7 @@
 .add-friend-btn {
   color: #22c55e;
 }
+
 .add-friend-btn:hover {
   background-color: #dcfce7;
 }
@@ -238,60 +260,29 @@
 .withdraw-btn {
   color: #ef4444;
 }
+
 .withdraw-btn:hover {
   background-color: #fee2e2;
 }
 
-.action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.3rem;
-  border-radius: 9999px;
-  transition: all 0.2s ease-in-out;
-}
-
-.accept-btn {
-  color: green;
-}
-
-.accept-btn:hover {
-  background-color: #d1fae5; /* light green */
-}
-
-.reject-btn {
-  color: red;
-  margin-left: 8px;
-}
-
-.reject-btn:hover {
-  background-color: #fee2e2; /* light red */
-}
-
-/* .pending-text {
-  padding: 4px 8px;
-  background-color: #ccc;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  color: #666;
-} */
-
+/* Pending text */
 .pending-text {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 6px;
+  padding: 0.25rem 0.4rem;
   background-color: #ccc;
   border-radius: 4px;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: #666;
-  height: 24px;
+  height: 1.5rem;
   box-sizing: border-box;
   text-align: center;
-  gap: 4px;
-  width: 90px;
+  gap: 0.25rem;
+  width: 5.5rem;
 }
 
+/* Connect button */
 .connect-btn {
   background-color: #e6f3ff;
   color: #2196f3;
@@ -299,7 +290,11 @@
   cursor: pointer;
   outline: none;
   appearance: none;
-  width: 90px;
+  width: 5.5rem;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  text-align: center;
 }
 
 .connect-btn:hover {
@@ -312,4 +307,229 @@
 .connect-btn svg {
   flex-shrink: 0;
   stroke: currentColor;
+}
+
+/* Mobile view (up to 600px) */
+@media screen and (max-width: 600px) {
+  .user-list-container {
+    max-width: auto;
+    padding: 1rem;
+  }
+
+  .tabs-container {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .tab-button {
+    padding: 0.75rem;
+    font-size: 1rem;
+  }
+
+  .no-users {
+    font-size: 1rem;
+    padding: 1rem;
+  }
+
+  .user-list-scroll {
+    max-height: 50vh;
+    padding-right: 0.5rem;
+  }
+
+  .user-item {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .user-name {
+    font-size: 1rem;
+  }
+
+  .online-status,
+  .offline-status {
+    width: 0.6rem;
+    height: 0.6rem;
+  }
+
+  .typing-indicator {
+    font-size: 0.875rem;
+  }
+
+  .unread-count {
+    font-size: 0.875rem;
+    padding: 0.3rem 0.6rem;
+    min-width: 1.5rem;
+  }
+
+  .add-friend-btn {
+    padding: 0.3rem 0.5rem;
+    height: 1.75rem;
+  }
+
+  .request-actions {
+    gap: 0.5rem;
+  }
+
+  .pending-text {
+    font-size: 0.875rem;
+    padding: 0.3rem 0.5rem;
+    height: 1.75rem;
+    width: 6rem;
+  }
+
+  .connect-btn {
+    font-size: 0.875rem;
+    padding: 0.3rem 0.5rem;
+    width: 6rem;
+  }
+}
+
+/* Tablet view (601px to 1024px) */
+@media screen and (min-width: 601px) and (max-width: 1024px) {
+  .user-list-container {
+    max-width: auto;
+    padding: 1.5rem;
+  }
+
+  .tab-button {
+    font-size: 1rem;
+    padding: 0.6rem 0.8rem;
+  }
+
+  .no-users {
+    font-size: 1rem;
+  }
+
+  .user-list-scroll {
+    max-height: 55vh;
+  }
+
+  .user-name {
+    font-size: 1rem;
+  }
+
+  .typing-indicator {
+    font-size: 0.875rem;
+  }
+
+  .unread-count {
+    font-size: 0.875rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  .pending-text {
+    font-size: 0.875rem;
+    width: 6rem;
+  }
+
+  .connect-btn {
+    font-size: 0.875rem;
+    width: 6rem;
+  }
+}
+
+/* PC view (1025px and above) */
+@media screen and (min-width: 1025px) {
+  .user-list-container {
+    max-width: auto;
+  }
+
+  .tab-button {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+
+  .no-users {
+    font-size: 14px;
+  }
+
+  .user-name {
+    font-size: 14px;
+  }
+
+  .typing-indicator {
+    font-size: 12px;
+  }
+
+  .unread-count {
+    font-size: 12px;
+    padding: 4px 8px;
+    min-width: 20px;
+  }
+
+  .add-friend-btn {
+    padding: 4px 6px;
+    height: 24px;
+  }
+
+  .pending-text {
+    font-size: 0.9rem;
+    padding: 4px 6px;
+    height: 24px;
+    width: 90px;
+  }
+
+  .connect-btn {
+    font-size: 12px;
+    padding: 4px 6px;
+    width: 90px;
+  }
+
+  /* archive chat css  */
+  .menu-container {
+    position: relative; /* reference for absolute dropdown */
+    display: inline-block;
+  }
+
+  .menu-dots {
+    cursor: pointer;
+    font-size: 20px;
+    padding: 4px;
+    border-radius: 50%;
+    transition: background 0.2s;
+  }
+
+  .menu-dots:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .menu-dropdown {
+    position: absolute;
+    top: 40%; /* slightly below the dots */
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+    z-index: 100;
+    min-width: 160px;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  /* Show the dropdown when active */
+  .menu-container .menu-dropdown {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Buttons inside dropdown */
+  .menu-dropdown button {
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .menu-dropdown button:hover {
+    background-color: #f0f0f0;
+  }
 }

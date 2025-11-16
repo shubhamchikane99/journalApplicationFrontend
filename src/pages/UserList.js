@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import eventBus from "../utils/eventBus";
 import "../styles/UserList.css";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
+import { REACT_APP_BACKEND_URL } from "../services/config";
 
 const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
   const [typingUsers, setTypingUsers] = useState({});
@@ -19,6 +20,10 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
   const [acceptRequestUsersList, setAcceptRequestUsersList] = useState([]);
   const [isRequestUpdateFromSocket, setIsRequestUpdateFromSocket] =
     useState(false);
+
+  const [lastMessageTimes, setLastMessageTimes] = useState({});
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRef = useRef(null);
 
   const loggedInUser = JSON.parse(localStorage.getItem("user"));
 
@@ -63,7 +68,7 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
   // Web socket connect for msg count update in real-time
   useEffect(() => {
     const userId = loggedInUser.id;
-    const apiUrl = process.env.REACT_APP_BACKEND_URL;
+    const apiUrl = REACT_APP_BACKEND_URL;
     const socket = new SockJS(`${apiUrl}/ws`);
     //const socket = new SockJS("https://journalapplication-production-8570.up.railway.app/ws");
     const client = new Client({
@@ -77,18 +82,27 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
         setIsConnected(true);
         setError(null);
 
-        console.log("web socker in connect");
-
         client.subscribe(`/topic/private-unread-msg/${userId}`, (message) => {
           const senderId = message.body;
 
-          if (selectedUsers !== senderId) {
-            setUnreadCounts((prev) => {
+          setUnreadCounts((prev) => {
+            // Check current selected user from state
+            if (selectedUsers !== senderId) {
               const newCounts = { ...prev };
               newCounts[senderId] = (newCounts[senderId] || 0) + 1;
+
+              // Update last message timestamp
+              setLastMessageTimes((prevTimes) => ({
+                ...prevTimes,
+                [senderId]: new Date().toISOString(),
+              }));
+
               return newCounts;
-            });
-          }
+            }
+
+            // If same user, do nothing
+            return prev;
+          });
         });
 
         //onlineOffline Users
@@ -105,7 +119,6 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
         client.subscribe(`/topic/user-request-list/${userId}`, (message) => {
           const requestUserList = JSON.parse(message.body);
           setRequestCounts((prevCount) => prevCount + 1);
-          console.log("call is here");
           setRequestUserList(requestUserList);
         });
 
@@ -176,6 +189,11 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
       ...prev,
       [user.id]: 0,
     }));
+
+    setLastMessageTimes((prev) => {
+      const { [user.id]: _, ...rest } = prev;
+      return rest;
+    });
   };
 
   const handleUserClick = (user) => {
@@ -254,6 +272,45 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
     }
   };
 
+  // Sort users by unread count descending
+  const usersToDisplay =
+    activeTab === "chat"
+      ? [...getTabUsers()].sort((a, b) => {
+          const lastA = lastMessageTimes[a.id]
+            ? new Date(lastMessageTimes[a.id])
+            : 0;
+          const lastB = lastMessageTimes[b.id]
+            ? new Date(lastMessageTimes[b.id])
+            : 0;
+          return lastB - lastA; // newest message first
+        })
+      : getTabUsers();
+
+  //ArchiveChat
+  const toggleMenu = (userId) => {
+    setOpenMenuId((prev) => (prev === userId ? null : userId));
+  };
+
+  const handleArchiveChat = (userId) => {
+    // your logic to archive chat (e.g. API call or move to archived list)
+    console.log("Archiving chat with user:", userId);
+    setOpenMenuId(null);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpenMenuId(null); // close the menu
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="user-list-container">
       <div className="tabs-container">
@@ -282,9 +339,9 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
         </button>
       </div>
 
-      {getTabUsers().length > 0 ? (
+      {usersToDisplay.length > 0 ? (
         <div className="user-list-scroll">
-          {getTabUsers().map((user) => (
+          {usersToDisplay.map((user) => (
             <div
               key={user.id}
               className="user-item"
@@ -293,11 +350,23 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
               }
             >
               {/* User Name - always shown */}
-              <span className="user-name">{user.firstName}</span>
+              <span className="user-name">{user.firstName} </span>
 
               {/* Show only in Chat Tab */}
               {activeTab === "chat" && (
                 <>
+                  {/* Typing indicator */}
+                  {typingUsers[user.id] && (
+                    <span className="typing-indicator">✍️ typing...</span>
+                  )}
+
+                  {/* Unread count */}
+                  {unreadCounts[user.id] > 0 && (
+                    <span className="unread-count">
+                      {unreadCounts[user.id]}
+                    </span>
+                  )}
+
                   {/* Show online/offline status */}
                   {Array.isArray(onlineUsers) && onlineUsers.length > 0 ? (
                     onlineUsers.includes(user.id) ? (
@@ -311,17 +380,27 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
                     <span className="offline-status"></span>
                   )}
 
-                  {/* Typing indicator */}
-                  {typingUsers[user.id] && (
-                    <span className="typing-indicator">✍️ typing...</span>
-                  )}
-
-                  {/* Unread count */}
-                  {unreadCounts[user.id] > 0 && (
-                    <span className="unread-count">
-                      {unreadCounts[user.id]}
+                  {/* 3-dot Menu */}
+                  <div
+                    className="menu-container"
+                    ref={menuRef}
+                    onClick={(e) => e.stopPropagation()} // prevent opening chat
+                  >
+                    <span
+                      className="menu-dots"
+                      onClick={() => toggleMenu(user.id)}
+                    >
+                      ⋮
                     </span>
-                  )}
+
+                    {openMenuId === user.id && (
+                      <div className="menu-dropdown">
+                        <button onClick={() => handleArchiveChat(user.id)}>
+                          Archive Chat
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
 

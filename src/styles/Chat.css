@@ -1,17 +1,58 @@
+/* Base styles */
+.chat-page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .chat-container {
-    display: flex;
-    height: 100vh;
-    font-family: monospace;
-    font-size: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+/* UserList and ChatWindow should take 100% height */
+.chat-container > * {
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Placeholder styling */
+.chat-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #777;
+}
+
+/* Error message */
+.error-message {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #f44336;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  z-index: 1000;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .chat-container {
+    width: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
   }
-  
-  .chat-placeholder {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 18px;
-    color: gray;
-    
+
+  .chat-container > * {
+    min-width: 100vw;
+    flex: 0 0 auto;
   }
-  
+}
