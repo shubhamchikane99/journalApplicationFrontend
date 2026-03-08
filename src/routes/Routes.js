@@ -9,6 +9,8 @@ import JournalEntry from "../pages/JournalEntry";
 import TicTacToe from "../pages/TicTacToe";
 import SignUpForm from "../pages/SignUpForm";
 import NotificationPage from "../pages/NotificationPage";
+import Payment from "../components/Payment";
+import AddPlanForm from "../pages/AddPlanForm";
 
 const AppRoutes = [
   <Route key="login" path="/" element={<LoginForm />} />,
@@ -62,6 +64,30 @@ const AppRoutes = [
       </ProtectedRoute>
     }
   />,
+
+    <Route
+    key="payment"
+    path="payment"
+    element={
+      <ProtectedRoute>
+       <Payment />
+      </ProtectedRoute>
+    }
+    />,
+
+        <Route
+    key="/add-plan"
+    path="/add-plan"
+    element={
+      <ProtectedRoute>
+       <AddPlanForm />
+      </ProtectedRoute>
+    }
+    />,
+
+
+  
+
   <Route key="not-found" path="*" element={<NotFound />} />,
 ];
 

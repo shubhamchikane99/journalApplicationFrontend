@@ -38,6 +38,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
   const [previewBg, setPreviewBg] = useState(null);
   const [selectedBgFile, setSelectedBgFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [count, setCount] = useState(0);
 
   const messageRefs = useRef({});
   const [selectedMessageId, setSelectedMessageId] = useState(null);
@@ -85,7 +86,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
         // **Immediately call API to mark messages as SEEN**
         fetchData(
           endPoint.chatMessage +
-            `/mark-seen/${currentUser.id}/${selectedUser.id}`
+            `/mark-seen/${currentUser.id}/${selectedUser.id}`,
         );
         const userPrivateDestination = `/user/${userId}/private`;
         client.subscribe(userPrivateDestination, (message) => {
@@ -101,7 +102,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
             //setMessages((prevMessages) => [...prevMessages, receivedMessage]);
             setMessages((prevMessages) => {
               const isAlreadyInState = prevMessages.some(
-                (msg) => msg.id === receivedMessage.id
+                (msg) => msg.id === receivedMessage.id,
               );
               return isAlreadyInState
                 ? prevMessages
@@ -114,14 +115,14 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
             ) {
               setMessages((prevMessages) =>
                 prevMessages.map((msg) =>
-                  msg.id === receivedMessage.id ? { ...msg, status: "3" } : msg
-                )
+                  msg.id === receivedMessage.id ? { ...msg, status: "3" } : msg,
+                ),
               );
 
               //  **Call API to mark it as seen in DataBase**
               fetchData(
                 endPoint.chatMessage +
-                  `/mark-seen/${currentUser.id}/${selectedUser.id}`
+                  `/mark-seen/${currentUser.id}/${selectedUser.id}`,
               );
             }
           } else {
@@ -173,9 +174,9 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
                 return isDelete === 1
                   ? { ...msg, isDelete: 1 }
                   : { ...msg, isDelete: 2 };
-              })
+              }),
             );
-          }
+          },
         );
 
         client.subscribe(
@@ -192,16 +193,16 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
                 return isEdited === 1
                   ? { ...msg, isEdited: 1 }
                   : { ...msg, isEdited: 0 };
-              })
+              }),
             );
-          }
+          },
         );
       },
 
       onDisconnect: () => {
         setIsConnected(false);
         // setError("Disconnected. Reconnecting...");
-         setError("");
+        setError("");
         // 🔴 Mark user as offline in DB
         // fetchData(endPoint.chatMessage`/${userId}/offline`);
       },
@@ -235,7 +236,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
       try {
         const response = await fetchData(
           endPoint.chatMessage +
-            `/messages/${currentUser.id}/${selectedUser.id}`
+            `/messages/${currentUser.id}/${selectedUser.id}`,
         );
 
         if (response.error || response.data?.error) {
@@ -248,7 +249,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
             (msg.senderId === currentUser.id &&
               msg.receiverId === selectedUser.id) ||
             (msg.senderId === selectedUser.id &&
-              msg.receiverId === currentUser.id)
+              msg.receiverId === currentUser.id),
         );
         setMessages(filteredMessages); // Set the messages correctly as an array
       } catch (error) {
@@ -278,7 +279,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
     //  Check if STOMP is disconnected before publishing
     if (!stompClient || !stompClient.connected) {
       console.error(
-        " STOMP client is not connected! Cannot send typing event."
+        " STOMP client is not connected! Cannot send typing event.",
       );
       return; //  Stop execution if STOMP is not connected
     }
@@ -315,7 +316,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
         });
       } else {
         console.error(
-          " STOMP client is disconnected! Cannot send stop-typing event."
+          " STOMP client is disconnected! Cannot send stop-typing event.",
         );
       }
 
@@ -356,7 +357,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
             receiverId: typingData.receiverId,
             isTyping: typingData.isTyping,
           });
-        }
+        },
       );
 
       return () => {
@@ -409,8 +410,8 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
     const messageType = message.trim()
       ? "text"
       : uploadedFileUrl
-      ? "file"
-      : "text";
+        ? "file"
+        : "text";
 
     if (messageContent.trim() !== "") {
       const chatMessage = {
@@ -432,6 +433,9 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
           body: JSON.stringify(chatMessage),
         });
 
+        //increate the count
+        setCount((prev) => prev + 1);
+
         //  Ensure message only appends when chat is active
         if (selectedUser.id === chatMessage.receiverId) {
           setMessages((prev) => [...prev, chatMessage]);
@@ -444,13 +448,13 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
           //  Fetch the latest message after sending
           const response = await fetchData(
             endPoint.chatMessage +
-              `/messages/${currentUser.id}/${selectedUser.id}`
+              `/messages/${currentUser.id}/${selectedUser.id}`,
           );
 
           if (response.error || response.data?.error) {
             console.error(
               "Error fetching latest message:",
-              response.data?.errorMessage
+              response.data?.errorMessage,
             );
             return;
           }
@@ -461,7 +465,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
               (msg.senderId === currentUser.id &&
                 msg.receiverId === selectedUser.id) ||
               (msg.senderId === selectedUser.id &&
-                msg.receiverId === currentUser.id)
+                msg.receiverId === currentUser.id),
           );
           setMessages(filteredMessages);
         } catch (error) {
@@ -518,6 +522,10 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault(); // Prevent new line
+      if (count >= 5 && currentUser.isAdmin !== 1) {
+        window.location.href = "/payment";
+        return;
+      }
       sendMessage();
     }
   };
@@ -542,7 +550,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-        }
+        },
       );
 
       if (response?.data) {
@@ -589,7 +597,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
     try {
       // Call the API with the flag
       await fetchData(
-        endPoint.chatMessage + `/delete-message/${messageId}?flag=${flag}`
+        endPoint.chatMessage + `/delete-message/${messageId}?flag=${flag}`,
       );
 
       // Update the message locally based on the flag
@@ -597,7 +605,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
         prevMessages.map((msg) => {
           if (msg.id !== messageId) return msg;
           return flag === 1 ? { ...msg, isDelete: 1 } : { ...msg, isDelete: 2 };
-        })
+        }),
       );
     } catch (error) {
       console.error("Failed to delete message", error);
@@ -662,7 +670,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
       const response = await postData(
         endPoint.fileUpload + "/upload",
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
 
       if (response?.data) {
@@ -693,13 +701,13 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
   //Fetch User Chat Background Image
   useEffect(() => {
     const fetchUserBackgroundImage = async () => {
-       setLoading(true);
+      setLoading(true);
       if (!selectedUser || !currentUser) return;
 
       try {
         const response = await fetchData(
           endPoint.chatTheme +
-            `/by-user?userId=${currentUser.id}&selectUserId=${selectedUser.id}`
+            `/by-user?userId=${currentUser.id}&selectUserId=${selectedUser.id}`,
         );
 
         if (response.error || response.data?.error) {
@@ -715,13 +723,42 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
         } else {
           setChatBackground(""); // 🧹 clear if no image in DB
         }
-         setLoading(false);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching messages:", error);
       }
     };
 
     fetchUserBackgroundImage();
+  }, [selectedUser, currentUser]); // Re-fetch when user changes
+
+  //msg count
+  useEffect(() => {
+    const fetchUserMsgCounts = async () => {
+      setLoading(true);
+      if (!selectedUser || !currentUser) return;
+
+      try {
+        const response = await fetchData(
+          endPoint.userMessageUsage + `/${currentUser.id}/${selectedUser.id}`,
+        );
+
+        if (response.error || response.data?.error) {
+          setError(
+            response.data?.errorMessage || "Failed to fetch messages counts.",
+          );
+          return;
+        }
+
+        setCount(response?.data?.messageCount ?? 0);
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      }
+    };
+
+    fetchUserMsgCounts();
   }, [selectedUser, currentUser]); // Re-fetch when user changes
 
   return (
@@ -731,8 +768,8 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
         background: previewBg
           ? `url(${previewBg}) center/cover no-repeat`
           : chatBackground
-          ? `url(${chatBackground}) center/cover no-repeat`
-          : "#fff", // default white
+            ? `url(${chatBackground}) center/cover no-repeat`
+            : "#fff", // default white
       }}
     >
       {loading && <Loader />}
@@ -780,8 +817,8 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
                 ? " ✅ (Online)"
                 : " ❌ (Offline)"
               : selectedUser.isActive === 1
-              ? " ✅ (Online)"
-              : " ❌ (Offline)"
+                ? " ✅ (Online)"
+                : " ❌ (Offline)"
             : " ❌ (Offline)"}
           {isTyping && (
             <div className="typing-indicator" style={{ marginLeft: "10px" }}>
@@ -1025,7 +1062,51 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
               className="hidden"
             />
 
-            <button onClick={sendMessage} disabled={!isConnected}>
+            {count >= 5 && currentUser.isAdmin !== 1 && (
+              <div
+                style={{
+                  color: "red",
+                  fontSize: "12px",
+                  textAlign: "center",
+                  padding: "4px 8px",
+                }}
+              >
+                Free messages ended.{" "}
+                <span
+                  style={{
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    fontWeight: "bold",
+                  }}
+                  onClick={() => (window.location.href = "/payment")}
+                >
+                  Purchase a plan
+                </span>
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                if (count >= 5 && currentUser.isAdmin !== 1) {
+                  window.location.href = "/payment";
+                  return;
+                }
+                sendMessage();
+              }}
+              disabled={
+                !isConnected || (count >= 5 && currentUser.isAdmin !== 1)
+              }
+              title={
+                count >= 5 && currentUser.isAdmin !== 1
+                  ? "Free message limit reached. Please purchase a plan."
+                  : ""
+              }
+              style={
+                count >= 5 && currentUser.isAdmin !== 1
+                  ? { opacity: 0.5, cursor: "not-allowed" }
+                  : {}
+              }
+            >
               Send
             </button>
           </>

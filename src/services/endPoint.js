@@ -7,4 +7,7 @@ export const endPoint = {
   fileUpload: "v1/file-upload",
   notification: "v1/notifications",
   chatTheme: "v1/user-chat-backgrounds",
+  payment: "v1/payment",
+  plan: "v1/plan",
+  userMessageUsage: "v1/user-message-usage",
 };

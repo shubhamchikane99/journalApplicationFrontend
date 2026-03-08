@@ -6,7 +6,7 @@
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
     "@stomp/stompjs": "^7.0.0",
-    "axios": "^1.7.9",
+    "axios": "^1.13.6",
     "express": "^4.21.2",
     "framer-motion": "^12.23.24",
     "homepage": ".",

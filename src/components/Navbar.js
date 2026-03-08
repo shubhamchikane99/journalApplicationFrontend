@@ -6,9 +6,15 @@ import SockJS from "sockjs-client";
 import { fetchData, postData } from "../services/apiService";
 import "../styles/NavBar.css";
 import Loader from "../components/Loader";
-import { FaBell, FaComments, FaBookOpen, FaChartLine } from "react-icons/fa"; // 🔔 Bell Icon
+import {
+  FaBell,
+  FaComments,
+  FaBookOpen,
+  FaChartLine,
+  FaCreditCard,
+  FaLayerGroup,
+} from "react-icons/fa"; // 🔔 Bell Icon
 import { REACT_APP_BACKEND_URL } from "../services/config";
-
 
 const NavBar = ({ onLogout }) => {
   const loggedInUser = JSON.parse(localStorage.getItem("user"));
@@ -29,7 +35,7 @@ const NavBar = ({ onLogout }) => {
     setLoading(true);
     try {
       const data = await fetchData(
-        endPoint.users + "/active-status-update?id=" + loggedInUser.id
+        endPoint.users + "/active-status-update?id=" + loggedInUser.id,
       );
       if (data.data.statusCode === 200) {
         const onlineOfflineUserPayload = {
@@ -38,7 +44,7 @@ const NavBar = ({ onLogout }) => {
         };
         await postData(
           endPoint.chatMessage + `/online-offline-status`,
-          onlineOfflineUserPayload
+          onlineOfflineUserPayload,
         );
         onLogout();
       }
@@ -56,11 +62,11 @@ const NavBar = ({ onLogout }) => {
       const unreadMessageCount = async () => {
         try {
           const unreadMsg = await fetchData(
-            endPoint.chatMessage + "/unread-msg?userId=" + loggedInUser.id
+            endPoint.chatMessage + "/unread-msg?userId=" + loggedInUser.id,
           );
 
           const unreadNotif = await fetchData(
-            endPoint.notification + "/unread-count?userId=" + loggedInUser.id
+            endPoint.notification + "/unread-count?userId=" + loggedInUser.id,
           );
 
           setUnreadCount(unreadMsg.data);
@@ -98,7 +104,7 @@ const NavBar = ({ onLogout }) => {
         //Unread Count update as read on chat tap
         client.subscribe(`/topic/read-msg/${userId}`, (message) => {
           const remainingMsgCount = JSON.parse(message.body);
-            setUnreadCount(remainingMsgCount);
+          setUnreadCount(remainingMsgCount);
         });
 
         client.subscribe(`/topic/unread-notification/${userId}`, (message) => {
@@ -111,7 +117,7 @@ const NavBar = ({ onLogout }) => {
       onDisconnect: () => {
         setIsConnected(false);
         // setError("Disconnected. Reconnecting...");
-         setError("");
+        setError("");
       },
 
       onStompError: (frame) => {
@@ -142,8 +148,7 @@ const NavBar = ({ onLogout }) => {
       {loading && <Loader />}
       <div className="nav-links">
         {/* // <Link to="/journal-entry">Journal Entry</Link> */}
-
-         < div className="journal-bell">
+        <div className="journal-bell">
           <Link
             to="/journal-entry"
             className={`journal-link ${
@@ -154,7 +159,6 @@ const NavBar = ({ onLogout }) => {
             <span className="journal-text">Journal Entry</span>
           </Link>
         </div>
-
         <div className="dashboard-bell">
           <Link
             to={dashboardPath}
@@ -166,7 +170,6 @@ const NavBar = ({ onLogout }) => {
             <span className="dashboard-text">Dashboard</span>
           </Link>
         </div>
-
         <div className="chat-bell">
           <Link
             to="/chat"
@@ -181,7 +184,6 @@ const NavBar = ({ onLogout }) => {
             )}
           </Link>
         </div>
-
         {/* Notification Bell with Text */}
         <div className="notification-bell">
           <Link
@@ -199,7 +201,22 @@ const NavBar = ({ onLogout }) => {
             )}
           </Link>
         </div>
-
+        {/* Payment mode */}
+        <div className="payment-bell">
+          <Link to="/payment">
+            <FaCreditCard size={18} /> {/* Smaller Bell */}
+            <span className="payment-text">Payment</span>
+          </Link>
+        </div>
+        {/* add plan */}
+        {loggedInUser.isAdmin === 1 && (
+          <div className="plan-bell">
+            <Link to="/add-plan">
+              <FaLayerGroup size={18} />
+              <span className="plan-text">Plan</span>
+            </Link>
+          </div>
+        )}
         {/* <Link to="/chat">Chat {unreadCount > 0 && `(${unreadCount})`}</Link> */}
         <button className="logout-btn" onClick={fetchLoginData}>
           Logout
