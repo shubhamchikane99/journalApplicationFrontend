@@ -754,8 +754,11 @@ const ChatWindow = ({
           );
           return;
         }
-
-        setCount(response?.data?.messageCount ?? 0);
+        if (response.data.daysCount > 30) {
+          setCount(0);
+        } else {
+          setCount(response?.data?.messageCount ?? 0);
+        }
 
         setLoading(false);
       } catch (error) {
