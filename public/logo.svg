@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6C63FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3ECFCF;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bubbleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e8e4ff;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#3b3b8a" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="110" ry="110" fill="url(#bgGrad)"/>
+
+  <!-- Main chat bubble (large, left-aligned) -->
+  <rect x="80" y="130" width="310" height="170" rx="34" ry="34" fill="url(#bubbleGrad)" filter="url(#shadow)"/>
+  <!-- Tail for main bubble -->
+  <polygon points="110,300 80,355 165,300" fill="url(#bubbleGrad)"/>
+
+  <!-- Dots inside main bubble -->
+  <circle cx="168" cy="215" r="18" fill="#6C63FF" opacity="0.85"/>
+  <circle cx="235" cy="215" r="18" fill="#6C63FF" opacity="0.55"/>
+  <circle cx="302" cy="215" r="18" fill="#6C63FF" opacity="0.3"/>
+
+  <!-- Secondary chat bubble (smaller, right side) -->
+  <rect x="200" y="290" width="230" height="110" rx="26" ry="26" fill="#ffffff" opacity="0.25"/>
+  <!-- Tail for secondary bubble -->
+  <polygon points="400,400 430,390 405,370" fill="#ffffff" opacity="0.25"/>
+
+  <!-- Dots in secondary bubble -->
+  <circle cx="268" cy="345" r="12" fill="#ffffff" opacity="0.85"/>
+  <circle cx="315" cy="345" r="12" fill="#ffffff" opacity="0.6"/>
+  <circle cx="362" cy="345" r="12" fill="#ffffff" opacity="0.4"/>
+</svg>
