@@ -6,6 +6,13 @@ import { postData, fetchData } from "../services/apiService";
 import NavBar from "../components/Navbar";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import Loader from "../components/Loader";
+
+const DURATION_OPTIONS = [
+  { label: "15 Days", value: 15 },
+  { label: "30 Days", value: 30 },
+  { label: "1 Year (365 Days)", value: 365 },
+];
 
 export default function AddPlanForm() {
   const [features, setFeatures] = useState([""]);
@@ -15,24 +22,27 @@ export default function AddPlanForm() {
     description: "",
     popular: false,
     isActive: true,
+    duration: "", // ← new field
   });
 
   const [featureError, setFeatureError] = useState("");
   const [formErrors, setFormErrors] = useState({});
   const [apiError, setApiError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const [plans, setPlans] = useState([]);
 
-  // ─── Edit & Delete state ────────────────────────────────────────────────────
   const [editingPlanId, setEditingPlanId] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  // ────────────────────────────────────────────────────────────────────────────
 
   const addFeature = () => {
     const lastFeature = features[features.length - 1]?.trim() || "";
     if (lastFeature === "") {
-      setFeatureError("Please fill in the current feature before adding a new one.");
+      setFeatureError(
+        "Please fill in the current feature before adding a new one.",
+      );
       return;
     }
     setFeatureError("");
@@ -58,8 +68,10 @@ export default function AddPlanForm() {
     if (!formData.name.trim()) errors.name = "Display Name is required";
     if (!formData.price || Number(formData.price) <= 0)
       errors.price = "Valid price (greater than 0) is required";
+    if (!formData.duration) errors.duration = "Please select a plan duration";
     const cleaned = features.filter((f) => f.trim() !== "");
-    if (cleaned.length === 0) errors.features = "At least one feature is required";
+    if (cleaned.length === 0)
+      errors.features = "At least one feature is required";
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -84,11 +96,14 @@ export default function AddPlanForm() {
     setApiError("");
     if (!validateForm()) return;
 
-    const cleanedFeatures = features.filter((f) => f.trim() !== "").map((f) => f.trim());
+    const cleanedFeatures = features
+      .filter((f) => f.trim() !== "")
+      .map((f) => f.trim());
     const payload = {
       ...formData,
       isPopuler: formData.popular ? 1 : 0,
       price: Number(formData.price),
+      duration: Number(formData.duration),
       planFeature: cleanedFeatures.map((text) => ({ name: text })),
       isActive: formData.isActive ? 1 : 0,
     };
@@ -109,9 +124,20 @@ export default function AddPlanForm() {
       }
 
       if (response?.data) {
-        alert(editingPlanId ? "Plan updated successfully!" : "Plan created successfully!");
+        alert(
+          editingPlanId
+            ? "Plan updated successfully!"
+            : "Plan created successfully!",
+        );
         setEditingPlanId(null);
-        setFormData({ name: "", price: "", description: "", popular: false, isActive: true });
+        setFormData({
+          name: "",
+          price: "",
+          description: "",
+          popular: false,
+          isActive: true,
+          duration: "",
+        });
         setFeatures([""]);
         setFormErrors({});
         setFeatureError("");
@@ -130,17 +156,20 @@ export default function AddPlanForm() {
 
   useEffect(() => {
     const fetchPlans = async () => {
+      setLoading(true);
       try {
         const response = await fetchData(`${endPoint.plan}/get-all`);
         if (response?.error || response?.data?.error) {
           console.error("Failed to fetch plans:", response.data?.errorMessage);
           return;
         }
-        const planList = response.data || response.data?.plans || response.data?.result || [];
+        const planList =
+          response.data || response.data?.plans || response.data?.result || [];
         setPlans(planList);
       } catch (err) {
         console.error("Error fetching plans:", err);
       }
+      setLoading(false);
     };
     fetchPlans();
   }, []);
@@ -153,7 +182,6 @@ export default function AddPlanForm() {
     navigate("/");
   };
 
-  // ─── Edit handler ───────────────────────────────────────────────────────────
   const handleEditClick = (plan) => {
     setEditingPlanId(plan.id);
     setFormData({
@@ -162,11 +190,12 @@ export default function AddPlanForm() {
       description: plan.description || "",
       popular: !!plan.popular,
       isActive: plan.isActive !== undefined ? !!plan.isActive : true,
+      duration: plan.duration ? String(plan.duration) : "",
     });
     setFeatures(
       plan.planFeature && plan.planFeature.length > 0
         ? plan.planFeature.map((f) => f.name)
-        : [""]
+        : [""],
     );
     setFormErrors({});
     setFeatureError("");
@@ -174,19 +203,25 @@ export default function AddPlanForm() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // ─── Cancel edit ────────────────────────────────────────────────────────────
   const handleCancelEdit = () => {
     setEditingPlanId(null);
-    setFormData({ name: "", price: "", description: "", popular: false, isActive: true });
+    setFormData({
+      name: "",
+      price: "",
+      description: "",
+      popular: false,
+      isActive: true,
+      duration: "",
+    });
     setFeatures([""]);
     setFormErrors({});
     setFeatureError("");
     setApiError("");
   };
 
-  // ─── Delete handler ─────────────────────────────────────────────────────────
   const handleDeleteConfirm = async (planId) => {
     setIsDeleting(true);
+    setLoading(true);
     try {
       const response = await postData(`${endPoint.plan}/delete/${planId}`, {});
       if (response?.error || response?.data?.error) {
@@ -206,35 +241,34 @@ export default function AddPlanForm() {
       setDeleteConfirmId(null);
     } finally {
       setIsDeleting(false);
+      setLoading(false);
     }
   };
 
-  // helper: plan initials for avatar
   const getInitials = (name = "") =>
-    name.trim().split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "?";
+    name
+      .trim()
+      .split(" ")
+      .map((w) => w[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "?";
+
+  const getDurationLabel = (days) => {
+    const opt = DURATION_OPTIONS.find((o) => o.value === Number(days));
+    return opt ? opt.label : days ? `${days} Days` : "—";
+  };
 
   return (
     <div>
       <NavBar onLogout={handleLogout} />
-
-      {/* ── Page Header ─────────────────────────────────────────────────────── */}
-      {/* <div className="page-header-strip">
-        <div>
-          <h1>
-            Subscription <em>Plans</em>
-          </h1>
-          <p>Manage pricing tiers and feature visibility for your users</p>
-        </div>
-      </div> */}
+      {loading && <Loader />}
 
       <div className="page-content">
-
         {/* ── Form Card ──────────────────────────────────────────────────────── */}
         <div className="card">
           <div className="card-header">
-            <div className="card-header-icon">
-              {editingPlanId ? "✏️" : "✦"}
-            </div>
+            <div className="card-header-icon">{editingPlanId ? "✏️" : "✦"}</div>
             <div className="card-header-text">
               <h1>{editingPlanId ? "Edit Plan" : "Create New Plan"}</h1>
               <p>
@@ -253,10 +287,8 @@ export default function AddPlanForm() {
 
           <form onSubmit={handleSubmit} className="plan-form" noValidate>
             <div className="form-grid">
-
               {/* ── Left column ──────────────────────────────────────────────── */}
               <div className="form-column">
-
                 <div className="form-group">
                   <label htmlFor="name">Display Name *</label>
                   <input
@@ -269,7 +301,9 @@ export default function AddPlanForm() {
                     required
                     className={formErrors.name ? "input-error" : ""}
                   />
-                  {formErrors.name && <span className="error-text">{formErrors.name}</span>}
+                  {formErrors.name && (
+                    <span className="error-text">{formErrors.name}</span>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -286,8 +320,38 @@ export default function AddPlanForm() {
                     required
                     className={formErrors.price ? "input-error" : ""}
                   />
-                  {formErrors.price && <span className="error-text">{formErrors.price}</span>}
+                  {formErrors.price && (
+                    <span className="error-text">{formErrors.price}</span>
+                  )}
                 </div>
+
+                {/* ── Duration dropdown ──────────────────────────────────────── */}
+                <div className="form-group">
+                  <label htmlFor="duration">Plan Duration *</label>
+                  <div className="select-wrapper">
+                    <select
+                      id="duration"
+                      name="duration"
+                      value={formData.duration}
+                      onChange={handleChange}
+                      className={`duration-select${formErrors.duration ? " input-error" : ""}${formData.duration ? " has-value" : ""}`}
+                    >
+                      <option value="" disabled>
+                        Select duration…
+                      </option>
+                      {DURATION_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="select-arrow">▾</span>
+                  </div>
+                  {formErrors.duration && (
+                    <span className="error-text">{formErrors.duration}</span>
+                  )}
+                </div>
+                {/* ──────────────────────────────────────────────────────────── */}
 
                 {/* Popular toggle */}
                 <div className="form-group checkbox-group">
@@ -303,7 +367,9 @@ export default function AddPlanForm() {
                       <div className="toggle-track" />
                       <div className="toggle-text">
                         <span className="toggle-title">Most Popular</span>
-                        <span className="toggle-desc">Highlight this plan for users</span>
+                        <span className="toggle-desc">
+                          Highlight this plan for users
+                        </span>
                       </div>
                     </div>
                   </label>
@@ -323,17 +389,17 @@ export default function AddPlanForm() {
                       <div className="toggle-track" />
                       <div className="toggle-text">
                         <span className="toggle-title">Publicly Visible</span>
-                        <span className="toggle-desc">Show this plan to users</span>
+                        <span className="toggle-desc">
+                          Show this plan to users
+                        </span>
                       </div>
                     </div>
                   </label>
                 </div>
-
               </div>
 
               {/* ── Right column ─────────────────────────────────────────────── */}
               <div className="form-column">
-
                 <div className="form-group">
                   <label htmlFor="description">Description</label>
                   <textarea
@@ -372,8 +438,12 @@ export default function AddPlanForm() {
                     ))}
                   </div>
 
-                  {featureError && <span className="error-text">{featureError}</span>}
-                  {formErrors.features && <span className="error-text">{formErrors.features}</span>}
+                  {featureError && (
+                    <span className="error-text">{featureError}</span>
+                  )}
+                  {formErrors.features && (
+                    <span className="error-text">{formErrors.features}</span>
+                  )}
 
                   <button
                     type="button"
@@ -384,7 +454,6 @@ export default function AddPlanForm() {
                     + Add another feature
                   </button>
                 </div>
-
               </div>
             </div>
 
@@ -398,10 +467,18 @@ export default function AddPlanForm() {
                 {editingPlanId ? "✕ Cancel Edit" : "Cancel"}
               </button>
 
-              <button type="submit" className="btn primary" disabled={isLoading}>
+              <button
+                type="submit"
+                className="btn primary"
+                disabled={isLoading}
+              >
                 {isLoading
-                  ? editingPlanId ? "Updating…" : "Saving…"
-                  : editingPlanId ? "✓ Update Plan" : "✦ Create Plan"}
+                  ? editingPlanId
+                    ? "Updating…"
+                    : "Saving…"
+                  : editingPlanId
+                    ? "✓ Update Plan"
+                    : "✦ Create Plan"}
               </button>
             </div>
           </form>
@@ -413,7 +490,9 @@ export default function AddPlanForm() {
             <div className="card-header-icon">📋</div>
             <div className="card-header-text">
               <h2>Existing Plans</h2>
-              <p>{plans.length} plan{plans.length !== 1 ? "s" : ""} configured</p>
+              <p>
+                {plans.length} plan{plans.length !== 1 ? "s" : ""} configured
+              </p>
             </div>
           </div>
 
@@ -421,7 +500,9 @@ export default function AddPlanForm() {
             {plans.length === 0 ? (
               <div className="empty-state">
                 <div className="empty-state-icon">✦</div>
-                <p><strong>No plans yet.</strong></p>
+                <p>
+                  <strong>No plans yet.</strong>
+                </p>
                 <p>Create your first subscription plan above to get started.</p>
               </div>
             ) : (
@@ -430,6 +511,7 @@ export default function AddPlanForm() {
                   <tr>
                     <th>Plan</th>
                     <th>Price (₹)</th>
+                    <th>Duration</th>
                     <th>Popular</th>
                     <th>Status</th>
                     <th>Features</th>
@@ -440,57 +522,81 @@ export default function AddPlanForm() {
                   {plans.map((plan, idx) => (
                     <tr
                       key={idx}
-                      className={editingPlanId === plan.id ? "is-editing-row" : ""}
+                      className={
+                        editingPlanId === plan.id ? "is-editing-row" : ""
+                      }
                     >
-                      {/* Plan name */}
                       <td>
                         <div className="plan-name-cell">
-                          <div className="plan-avatar">{getInitials(plan.name)}</div>
+                          <div className="plan-avatar">
+                            {getInitials(plan.name)}
+                          </div>
                           <span className="plan-name-text">{plan.name}</span>
                         </div>
                       </td>
 
-                      {/* Price */}
                       <td>
                         <span className="price-pill">
                           <span className="currency">₹</span>
-                          {(plan.price).toFixed(2)}
+                          {plan.price.toFixed(2)}
                         </span>
                       </td>
 
-                      {/* Popular */}
+                      {/* Duration column */}
                       <td>
-                        <span className={`status-badge ${plan.popular ? "yes" : "no"}`}>
+                        <span className="duration-pill">
+                          🕐 {getDurationLabel(plan.duration)}
+                        </span>
+                      </td>
+
+                      <td>
+                        <span
+                          className={`status-badge ${plan.popular ? "yes" : "no"}`}
+                        >
                           <span className="badge-dot" />
                           {plan.popular ? "Popular" : "Standard"}
                         </span>
                       </td>
 
-                      {/* Active */}
                       <td>
-                        <span className={`status-badge ${plan.isActive ? "yes" : "no"}`}>
+                        <span
+                          className={`status-badge ${plan.isActive ? "yes" : "no"}`}
+                        >
                           <span className="badge-dot" />
                           {plan.isActive ? "Active" : "Hidden"}
                         </span>
                       </td>
 
-                      {/* Features */}
                       <td>
                         <div className="features-chips">
-                          {plan.planFeature && plan.planFeature.length > 0
-                            ? plan.planFeature.slice(0, 3).map((f, i) => (
-                                <span key={i} className="feature-chip" title={f.name}>
-                                  {f.name}
-                                </span>
-                              ))
-                            : <span style={{ color: "var(--slate-500)", fontSize: "0.85rem" }}>—</span>}
+                          {plan.planFeature && plan.planFeature.length > 0 ? (
+                            plan.planFeature.slice(0, 3).map((f, i) => (
+                              <span
+                                key={i}
+                                className="feature-chip"
+                                title={f.name}
+                              >
+                                {f.name}
+                              </span>
+                            ))
+                          ) : (
+                            <span
+                              style={{
+                                color: "var(--slate-500)",
+                                fontSize: "0.85rem",
+                              }}
+                            >
+                              —
+                            </span>
+                          )}
                           {plan.planFeature?.length > 3 && (
-                            <span className="feature-chip">+{plan.planFeature.length - 3} more</span>
+                            <span className="feature-chip">
+                              +{plan.planFeature.length - 3} more
+                            </span>
                           )}
                         </div>
                       </td>
 
-                      {/* Actions */}
                       <td>
                         {deleteConfirmId === plan.id ? (
                           <div className="delete-confirm">
@@ -517,7 +623,9 @@ export default function AddPlanForm() {
                               onClick={() => handleEditClick(plan)}
                               disabled={isLoading || isDeleting}
                             >
-                              {editingPlanId === plan.id ? "Editing…" : "✏ Edit"}
+                              {editingPlanId === plan.id
+                                ? "Editing…"
+                                : "✏ Edit"}
                             </button>
                             <button
                               className="action-btn delete"
@@ -536,7 +644,6 @@ export default function AddPlanForm() {
             )}
           </div>
         </div>
-
       </div>
     </div>
   );

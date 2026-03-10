@@ -14,7 +14,12 @@ import { FaArrowLeft } from "react-icons/fa";
 import { REACT_APP_BACKEND_URL } from "../services/config";
 import Loader from "../components/Loader";
 
-const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
+const ChatWindow = ({
+  selectedUser,
+  currentUser,
+  setSelectedUser,
+  hasActivePlan,
+}) => {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [stompClient, setStompClient] = useState(null);
@@ -522,7 +527,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault(); // Prevent new line
-      if (count >= 5 && currentUser.isAdmin !== 1) {
+      if (!hasActivePlan && count >= 5 && currentUser.isAdmin !== 1) {
         window.location.href = "/payment";
         return;
       }
@@ -1062,7 +1067,7 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
               className="hidden"
             />
 
-            {count >= 5 && currentUser.isAdmin !== 1 && (
+            {!hasActivePlan && count >= 5 && currentUser.isAdmin !== 1 && (
               <div
                 style={{
                   color: "red",
@@ -1087,22 +1092,23 @@ const ChatWindow = ({ selectedUser, currentUser, setSelectedUser }) => {
 
             <button
               onClick={() => {
-                if (count >= 5 && currentUser.isAdmin !== 1) {
+                if (!hasActivePlan && count >= 5 && currentUser.isAdmin !== 1) {
                   window.location.href = "/payment";
                   return;
                 }
                 sendMessage();
               }}
               disabled={
-                !isConnected || (count >= 5 && currentUser.isAdmin !== 1)
+                !isConnected ||
+                (!hasActivePlan && count >= 5 && currentUser.isAdmin !== 1)
               }
               title={
-                count >= 5 && currentUser.isAdmin !== 1
+                !hasActivePlan && count >= 5 && currentUser.isAdmin !== 1
                   ? "Free message limit reached. Please purchase a plan."
                   : ""
               }
               style={
-                count >= 5 && currentUser.isAdmin !== 1
+                !hasActivePlan && count >= 5 && currentUser.isAdmin !== 1
                   ? { opacity: 0.5, cursor: "not-allowed" }
                   : {}
               }

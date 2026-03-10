@@ -13,7 +13,7 @@ const fetchUsersData = async (
   setUsers,
   setAllUsers,
   setRequestUsers,
-  setError
+  setError,
 ) => {
   try {
     const data = await fetchData(endPoint.users + "/get-all");
@@ -41,6 +41,7 @@ const Chat = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [error, setError] = useState("");
+  const [hasActivePlan, setHasActivePlan] = useState(false);
 
   useEffect(() => {
     fetchUsersData(setUsers, setAllUsers, setRequestUsers, setError);
@@ -61,6 +62,30 @@ const Chat = () => {
     navigate("/"); // Redirect to Login page
   };
 
+  //active plan
+  useEffect(() => {
+    if (!currentUser?.id) return;
+
+    const fetchActivePlan = async () => {
+      try {
+        const data = await fetchData(
+          `${endPoint.plan}/by-user?userId=${currentUser.id}`,
+        );
+        // daysCount > 0 = plan still active = unlimited messages
+        if (data.data && Number(data.data.daysCount) > 0) {
+          setHasActivePlan(true);
+        } else {
+          setHasActivePlan(false);
+        }
+      } catch (err) {
+        console.error("Failed to fetch active plan:", err);
+        setHasActivePlan(false);
+      }
+    };
+
+    fetchActivePlan();
+  }, [currentUser]); // re-runs when currentUser is loaded
+
   return (
     <div className="chat-page">
       <NavBar onLogout={handleLogout} /> {/* <-- Add NavBar at the top */}
@@ -69,6 +94,7 @@ const Chat = () => {
         {error && <div className="error-message">{error}</div>}
 
         {/* Left Side - User List */}
+
         <UserList
           users={users}
           allUsers={allUsers}
@@ -82,6 +108,7 @@ const Chat = () => {
             selectedUser={selectedUser}
             currentUser={currentUser}
             setSelectedUser={setSelectedUser}
+            hasActivePlan={hasActivePlan}
           />
         ) : (
           <div className="chat-placeholder" style={{ fontFamily: "monospace" }}>

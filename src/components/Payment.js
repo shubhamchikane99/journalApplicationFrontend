@@ -1,37 +1,110 @@
 import React, { useState, useContext, useEffect } from "react";
-import { fetchData } from "../services/apiService";
+import { fetchData, postData } from "../services/apiService";
 import { endPoint } from "../services/endPoint";
 import "../styles/Payment.css";
 import NavBar from "../components/Navbar";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import Loader from "../components/Loader";
 
 const Pricing = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  const { logout } = useContext(AuthContext); // ✅ Hook inside component
-  const navigate = useNavigate();
-  const [errors, setError] = useState(""); // State to manage errors
+  const [loggedInUser, setLoggedInUser] = useState(null);
+  const [errors, setError] = useState("");
   const [plans, setPlans] = useState([]);
 
+  // ── Active plan state ──────────────────────────────────────────────────────
+  const [activePlan, setActivePlan] = useState(null); // holds { id, name, description, daysCount }
+  const [showActiveBanner, setShowActiveBanner] = useState(false); // controls the modal
+
+  const { logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+
   const handleLogout = () => {
-    logout(); // Clear user data
-    navigate("/"); // Redirect to Login page
+    logout();
+    navigate("/");
   };
 
+  // ── Fetch all available plans ──────────────────────────────────────────────
+  useEffect(() => {
+    const fetchPlan = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchData(`${endPoint.plan}/active`);
+        if (data.data) {
+          const formattedPlans = data.data.map((p) => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            amountInPaise: p.price,
+            description: p.description,
+            duration: p.duration,
+            features: p.planFeature?.map((f) => f.name) || [],
+            popular: p.isPopuler === 1,
+          }));
+          setPlans(formattedPlans);
+        }
+      } catch (err) {
+        setError("Failed to fetch plans. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPlan();
+  }, []);
+
+  // ── Fetch logged-in user from localStorage ─────────────────────────────────
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    setLoggedInUser(user);
+  }, []);
+
+  // ── Fetch user's active plan once loggedInUser is available ───────────────
+  // API response: { id, name, description, daysCount }
+  // daysCount starts positive (e.g. "364") and BE decrements it daily.
+  // daysCount > 0  → plan still active  → block new purchase & show modal
+  // daysCount <= 0 → plan expired       → allow purchase normally
+  useEffect(() => {
+    if (!loggedInUser?.id) return;
+
+    const fetchUserPlan = async () => {
+      try {
+        const data = await fetchData(
+          `${endPoint.plan}/by-user?userId=${loggedInUser.id}`,
+        );
+
+        // Number() safely handles string values like "364"
+        if (data.data && Number(data.data.daysCount) > 0) {
+          setActivePlan(data.data);
+        }
+      } catch (err) {
+        // silently ignore — user may simply not have a plan yet
+        console.error("Failed to fetch user plan:", err);
+      }
+    };
+
+    fetchUserPlan();
+  }, [loggedInUser]);
+
+  // ── Payment flow ───────────────────────────────────────────────────────────
   const createOrder = async () => {
     if (!selectedPlan) {
       alert("Please select a plan first!");
       return;
     }
+
+    // Guard: if user already has an active plan, show the modal instead
+    if (activePlan) {
+      setShowActiveBanner(true);
+      return;
+    }
+
     setLoading(true);
     try {
       const data = await fetchData(
         `${endPoint.payment}/create-order?amount=${selectedPlan.amountInPaise}`,
       );
-
-      console.log("data " + JSON.stringify(data));
 
       if (data.data?.id) {
         openRazorpay(data.data);
@@ -46,38 +119,9 @@ const Pricing = () => {
     }
   };
 
-  //get All Journal Entry
-  useEffect(() => {
-    const fetchPlan = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchData(`${endPoint.plan}/active`);
-
-        if (data.data) {
-          const formattedPlans = data.data.map((p) => ({
-            id: p.id,
-            name: p.name,
-            price: p.price,
-            amountInPaise: p.price,
-            description: p.description,
-            features: p.planFeature?.map((f) => f.name) || [],
-            popular: p.isPopuler === 1,
-          }));
-          setPlans(formattedPlans);
-        }
-      } catch (err) {
-        setError("Failed to fetch Journal Entry. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPlan();
-  }, []);
-
   const openRazorpay = (order) => {
     const options = {
-      key: "rzp_test_SOHpNn6izxFQhc",
+      key: order.key,
       amount: order.amount,
       currency: order.currency || "INR",
       name: "Chat Application",
@@ -94,17 +138,19 @@ const Pricing = () => {
 
   const verifyPayment = async (response) => {
     try {
-      const verifyData = await fetchData(
-        `${endPoint.payment}/verify-payment`,
-        "POST",
-        {
-          razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_order_id: response.razorpay_order_id,
-          razorpay_signature: response.razorpay_signature,
-          planId: selectedPlan.id,
-        },
+      const payload = {
+        razorpayPaymentId: response.razorpay_payment_id,
+        razorpayOrderId: response.razorpay_order_id,
+        razorpaySignature: response.razorpay_signature,
+        planId: selectedPlan.id,
+        amount: selectedPlan.price,
+      };
+      const verifyData = await postData(
+        endPoint.payment + "/verify-payment",
+        payload,
       );
-      if (verifyData?.success) {
+
+      if (verifyData?.data) {
         alert("Payment successful! Plan activated.");
       } else {
         alert("Verification failed.");
@@ -115,16 +161,91 @@ const Pricing = () => {
     }
   };
 
+  // ── Already-purchased modal ────────────────────────────────────────────────
+  const ActivePlanBanner = () => (
+    <div
+      className="active-plan-overlay"
+      onClick={() => setShowActiveBanner(false)}
+    >
+      <div className="active-plan-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="active-plan-icon">🎉</div>
+
+        <h2 className="active-plan-title">You Already Have an Active Plan!</h2>
+        <p className="active-plan-subtitle">
+          Your current subscription is still active. You don't need to purchase
+          a new plan yet.
+        </p>
+
+        {activePlan && (
+          <div className="active-plan-details">
+            <div className="active-plan-detail-row">
+              <span className="detail-label">Plan</span>
+              <span className="detail-value">
+                {activePlan.name || "Current Plan"}
+              </span>
+            </div>
+            <div className="active-plan-detail-row">
+              <span className="detail-label">Days Remaining</span>
+              <span className="detail-value highlight">
+                {Number(activePlan.daysCount)} day
+                {Number(activePlan.daysCount) !== 1 ? "s" : ""}
+              </span>
+            </div>
+            {activePlan.expiryDate && (
+              <div className="active-plan-detail-row">
+                <span className="detail-label">Expires On</span>
+                <span className="detail-value">
+                  {new Date(activePlan.expiryDate).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <button
+          className="active-plan-close-btn"
+          onClick={() => setShowActiveBanner(false)}
+        >
+          Got it, thanks!
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div>
+      {loading && <Loader />}
       <NavBar onLogout={handleLogout} />
+
+      {/* Already-purchased modal */}
+      {showActiveBanner && <ActivePlanBanner />}
+
       {errors && <div className="error-message">{errors}</div>}
+
       <div className="pricing-container">
         <div className="pricing-content">
           <div className="header-text">
             <h1>Choose Your Plan</h1>
             <p>Unlock full messaging features in seconds.</p>
           </div>
+
+          {/* Subtle top banner shown when user already has an active plan */}
+          {activePlan && (
+            <div className="active-plan-topbar">
+              <span>
+                ✅ You have an active plan — <strong>{activePlan.name}</strong>
+              </span>
+              <span className="topbar-days">
+                {Number(activePlan.daysCount)} day
+                {Number(activePlan.daysCount) !== 1 ? "s" : ""} remaining
+              </span>
+            </div>
+          )}
 
           <div className="plans-grid">
             {plans.map((plan) => (
@@ -143,7 +264,7 @@ const Pricing = () => {
 
                 <div className="price-wrapper">
                   <span className="price">₹{plan.price}</span>
-                  <span className="period">/month</span>
+                  <span className="period">/{plan.duration} Day</span>
                 </div>
 
                 <p className="plan-description">{plan.description}</p>
