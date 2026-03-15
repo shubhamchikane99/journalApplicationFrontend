@@ -7,12 +7,18 @@ import { endPoint } from "../services/endPoint";
 import eventBus from "../utils/eventBus"; // Import eventBus
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
+import { marked } from "marked";
 import moment from "moment"; // Import Moment.js
 //import FileUpload from "../components/FileUpload";
 import "../styles/ChatWindow.css";
 import { FaArrowLeft } from "react-icons/fa";
 import { REACT_APP_BACKEND_URL } from "../services/config";
 import Loader from "../components/Loader";
+
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
 
 const ChatWindow = ({
   selectedUser,
@@ -37,6 +43,7 @@ const ChatWindow = ({
   const [replyToMessage, setReplyToMessage] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [showChatOptions, setShowChatOptions] = useState(null);
+  const [streamingMessage, setStreamingMessage] = useState(null);
 
   //Backgroup image
   const [chatBackground, setChatBackground] = useState(null); // stores background URL
@@ -64,6 +71,9 @@ const ChatWindow = ({
       webSocketFactory: () => socket,
       debug: (str) => str,
       reconnectDelay: 5000,
+      heartbeatIncoming: 4000, // ← keep connection alive
+      heartbeatOutgoing: 4000, // ← keep connection alive
+      splitLargeFrames: true,
       onConnect: () => {
         setIsConnected(true);
         setError(null);
@@ -109,9 +119,20 @@ const ChatWindow = ({
               const isAlreadyInState = prevMessages.some(
                 (msg) => msg.id === receivedMessage.id,
               );
-              return isAlreadyInState
-                ? prevMessages
-                : [...prevMessages, receivedMessage];
+              if (isAlreadyInState) return prevMessages;
+
+              if (
+                receivedMessage.senderId ===
+                "e87754c9-f1fa-4637-bce2-129e22633514"
+              ) {
+                typewriterEffect(
+                  receivedMessage.content || "",
+                  receivedMessage.id,
+                );
+                return [...prevMessages, { ...receivedMessage, content: "" }];
+              }
+
+              return [...prevMessages, receivedMessage];
             });
             //  **Mark newly received messages as SEEN instantly**
             if (
@@ -290,14 +311,16 @@ const ChatWindow = ({
     }
 
     //  Send "User is typing" event to WebSocket (STOMP)
-    stompClient.publish({
-      destination: "/app/typing-status",
-      body: JSON.stringify({
-        senderId: currentUser.id,
-        receiverId: selectedUser.id,
-        isTyping: true,
-      }),
-    });
+    if (stompClient && stompClient.connected) {
+      stompClient.publish({
+        destination: "/app/typing-status",
+        body: JSON.stringify({
+          senderId: currentUser.id,
+          receiverId: selectedUser.id,
+          isTyping: true,
+        }),
+      });
+    }
 
     // Emit typing event globally (UserList will update)
     eventBus.emit("typingStatus", {
@@ -337,7 +360,7 @@ const ChatWindow = ({
   useEffect(() => {
     if (!stompClient || !isConnected || !selectedUser) return;
 
-    if (stompClient.connected) {
+    if (stompClient && stompClient.connected) {
       const subscription = stompClient.subscribe(
         `/user/${currentUser.id}/isTyping`,
         (message) => {
@@ -431,7 +454,7 @@ const ChatWindow = ({
         insertDateTime: formattedDate, // Add timestamp
       };
 
-      if (stompClient.connected) {
+      if (stompClient && stompClient.connected) {
         // Ensure the connection is active before publishing
         stompClient.publish({
           destination: "/app/private-message",
@@ -480,14 +503,16 @@ const ChatWindow = ({
         //  Stop typing immediately when a message is sent
         clearTimeout(typingTimeoutRef.current);
 
-        stompClient.publish({
-          destination: "/app/typing-status",
-          body: JSON.stringify({
-            senderId: currentUser.id,
-            receiverId: selectedUser.id,
-            isTyping: false,
-          }),
-        });
+        if (stompClient && stompClient.connected) {
+          stompClient.publish({
+            destination: "/app/typing-status",
+            body: JSON.stringify({
+              senderId: currentUser.id,
+              receiverId: selectedUser.id,
+              isTyping: false,
+            }),
+          });
+        }
 
         eventBus.emit("typingStatus", {
           senderId: currentUser.id,
@@ -496,6 +521,7 @@ const ChatWindow = ({
         });
       } else {
         setError("Unable to send message. WebSocket not connected.");
+        if (stompClient) stompClient.activate(); //
       }
     }
   };
@@ -769,6 +795,29 @@ const ChatWindow = ({
     fetchUserMsgCounts();
   }, [selectedUser, currentUser]); // Re-fetch when user changes
 
+  const typewriterEffect = (fullText, messageId) => {
+    if (!fullText || !messageId) return;
+    setStreamingMessage({ id: messageId, content: "" });
+    let index = 0;
+    const interval = setInterval(() => {
+      index++;
+      setStreamingMessage({
+        id: messageId,
+        content: fullText.slice(0, index),
+      });
+      if (index >= fullText.length) {
+        clearInterval(interval);
+        // ← update the actual message in state with full content
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg.id === messageId ? { ...msg, content: fullText } : msg,
+          ),
+        );
+        setStreamingMessage(null); // ← then clear streaming
+      }
+    }, 15);
+  };
+
   return (
     <div
       className="chat-window"
@@ -968,8 +1017,23 @@ const ChatWindow = ({
                 ) : (
                   <img src={msg.content} width="200" alt="Uploaded" />
                 )
+              ) : msg.senderId === "e87754c9-f1fa-4637-bce2-129e22633514" ||
+                msg.receiverId === "e87754c9-f1fa-4637-bce2-129e22633514" ? (
+                <div
+                  className={`ai-message-bubble ${
+                    streamingMessage?.id === msg.id ? "typing" : ""
+                  }`}
+                  dangerouslySetInnerHTML={{
+                    __html: marked.parse(
+                      streamingMessage !== null &&
+                        streamingMessage?.id === msg.id
+                        ? streamingMessage?.content || ""
+                        : msg?.content || "",
+                    ),
+                  }}
+                />
               ) : (
-                msg.content
+                <span>{msg.content}</span>
               )}
               {/* Show message time and status only if NOT deleted */}
               {msg.isDelete !== 2 &&

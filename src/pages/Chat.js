@@ -24,7 +24,19 @@ const fetchUsersData = async (
     }
 
     if (data.data) {
-      setUsers(data.data.chat || []);
+      const sortedUsers = data.data.chat.sort((a, b) => {
+        if (a.isAi === 1) return -1;
+        if (b.isAi === 1) return 1;
+        // Check if both a and b have a name property before comparing
+        if (a.name && b.name) {
+          return a.name.localeCompare(b.name);
+        } else {
+          // If either a or b does not have a name, consider them equal
+          return 0;
+        }
+      });
+
+      setUsers(sortedUsers);
       setAllUsers(data.data.allUsers || []);
       setRequestUsers(data.data.request || []);
     }

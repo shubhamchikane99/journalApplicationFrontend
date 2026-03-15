@@ -77,6 +77,7 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
       reconnectDelay: 5000,
       heartbeatIncoming: 4000, // Add heartbeat for connection stability
       heartbeatOutgoing: 4000,
+      splitLargeFrames: true,
 
       onConnect: () => {
         setIsConnected(true);
@@ -129,7 +130,7 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
             const userListWithRequestFlag = JSON.parse(message.body);
 
             setUserListWithRequestFlag(userListWithRequestFlag);
-          }
+          },
         );
 
         //when accept the request then update user in chat section
@@ -139,7 +140,7 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
             const acceptRequestUsers = JSON.parse(message.body);
 
             setAcceptRequestUsersList(acceptRequestUsers);
-          }
+          },
         );
 
         //update request user list when accept the request
@@ -150,7 +151,7 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
 
             setRequestUserList(requestUserList);
             setIsRequestUpdateFromSocket(true);
-          }
+          },
         );
       },
 
@@ -260,8 +261,8 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
         return isRequestUpdateFromSocket
           ? requestUserList // show even if empty
           : requestUserList.length > 0
-          ? requestUserList
-          : requestUsers || [];
+            ? requestUserList
+            : requestUsers || [];
 
       case "friend":
         return userListWithRequestFlag.length > 0
@@ -328,8 +329,8 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
           {isRequestUpdateFromSocket
             ? `(${requestUserList?.length || 0})`
             : requestUsers?.length > 0 || requestCounts > 0
-            ? `(${(requestUsers?.length || 0) + requestCounts})`
-            : ""}
+              ? `(${(requestUsers?.length || 0) + requestCounts})`
+              : ""}
         </button>
         <button
           className={`tab-button ${activeTab === "friend" ? "active" : ""}`}
@@ -375,6 +376,8 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
                       <span className="offline-status"></span>
                     )
                   ) : user.isActive === 1 ? (
+                    <span className="online-status"></span>
+                  ) : user.isAi === 1 ? (
                     <span className="online-status"></span>
                   ) : (
                     <span className="offline-status"></span>
