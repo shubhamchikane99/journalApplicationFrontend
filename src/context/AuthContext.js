@@ -27,6 +27,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("userName");
     localStorage.removeItem("userId");
     localStorage.removeItem("userPassword");
+    localStorage.removeItem("features");
+
   };
 
   useEffect(() => {

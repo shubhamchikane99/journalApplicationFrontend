@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { fetchData } from "../services/apiService";
@@ -14,6 +14,8 @@ import "../styles/ChatWindow.css";
 import { FaArrowLeft } from "react-icons/fa";
 import { REACT_APP_BACKEND_URL } from "../services/config";
 import Loader from "../components/Loader";
+import LocationShare, { LocationMessage } from "../components/LocationMap";
+import { hasFeature } from "../services/featureService";
 
 marked.setOptions({
   breaks: true,
@@ -58,6 +60,8 @@ const ChatWindow = ({
     show: false,
     messageId: null,
   });
+
+  const isAdmin = currentUser?.isAdmin === 1;
 
   useEffect(() => {
     if (!currentUser || !selectedUser) return;
@@ -255,36 +259,35 @@ const ChatWindow = ({
     };
   }, [currentUser, selectedUser]);
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      if (!selectedUser || !currentUser) return;
+  const fetchMessages = useCallback(async () => {
+    if (!selectedUser || !currentUser) return;
 
-      try {
-        const response = await fetchData(
-          endPoint.chatMessage +
-            `/messages/${currentUser.id}/${selectedUser.id}`,
-        );
+    try {
+      const response = await fetchData(
+        endPoint.chatMessage + `/messages/${currentUser.id}/${selectedUser.id}`,
+      );
 
-        if (response.error || response.data?.error) {
-          setError(response.data?.errorMessage || "Failed to fetch messages.");
-          return;
-        }
-
-        const filteredMessages = response.data.filter(
-          (msg) =>
-            (msg.senderId === currentUser.id &&
-              msg.receiverId === selectedUser.id) ||
-            (msg.senderId === selectedUser.id &&
-              msg.receiverId === currentUser.id),
-        );
-        setMessages(filteredMessages); // Set the messages correctly as an array
-      } catch (error) {
-        console.error("Error fetching messages:", error);
+      if (response.error || response.data?.error) {
+        setError(response.data?.errorMessage || "Failed to fetch messages.");
+        return;
       }
-    };
 
+      const filteredMessages = response.data.filter(
+        (msg) =>
+          (msg.senderId === currentUser.id &&
+            msg.receiverId === selectedUser.id) ||
+          (msg.senderId === selectedUser.id &&
+            msg.receiverId === currentUser.id),
+      );
+      setMessages(filteredMessages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
+  }, [selectedUser, currentUser]); // ← only recreates when user changes
+
+  useEffect(() => {
     fetchMessages();
-  }, [selectedUser, currentUser]); // Re-fetch when user changes
+  }, [fetchMessages]); // ← only runs when fetchMessages changes// Re-fetch when user changes
 
   // Reconnect logic if the WebSocket connection is lost
   useEffect(() => {
@@ -780,11 +783,19 @@ const ChatWindow = ({
           );
           return;
         }
+
+        if (!response.data) {
+          setCount(0);
+          return;
+        }
+
         if (response.data.daysCount > 30) {
           setCount(0);
         } else {
           setCount(response?.data?.messageCount ?? 0);
         }
+
+        console.log("setCount " + setCount);
 
         setLoading(false);
       } catch (error) {
@@ -817,6 +828,10 @@ const ChatWindow = ({
       }
     }, 15);
   };
+
+  // Location
+  const canShowLocation =
+    currentUser.isAdmin === 1 || (hasActivePlan && count <= 5);
 
   return (
     <div
@@ -869,13 +884,15 @@ const ChatWindow = ({
           )}
           Chat with {selectedUser?.firstName || "Select a user"}
           {selectedUser
-            ? Array.isArray(onlineUsers) && onlineUsers.length > 0
-              ? onlineUsers.includes(selectedUser.id)
-                ? " ✅ (Online)"
-                : " ❌ (Offline)"
-              : selectedUser.isActive === 1
-                ? " ✅ (Online)"
-                : " ❌ (Offline)"
+            ? selectedUser.isAi === 1
+              ? " ✅ (Online)"
+              : Array.isArray(onlineUsers) && onlineUsers.length > 0
+                ? onlineUsers.includes(selectedUser.id)
+                  ? " ✅ (Online)"
+                  : " ❌ (Offline)"
+                : selectedUser.isActive === 1
+                  ? " ✅ (Online)"
+                  : " ❌ (Offline)"
             : " ❌ (Offline)"}
           {isTyping && (
             <div className="typing-indicator" style={{ marginLeft: "10px" }}>
@@ -901,9 +918,11 @@ const ChatWindow = ({
           {/* Dropdown menu */}
           {showChatOptions && (
             <div className="chat-options-dropdown">
-              <button onClick={() => fileInputRef.current.click()}>
-                Chat theme
-              </button>
+              {(isAdmin || hasFeature("CHAT_BACKGROUND")) && (
+                <button onClick={() => fileInputRef.current.click()}>
+                  Chat theme
+                </button>
+              )}
               <input
                 type="file"
                 accept="image/*"
@@ -949,24 +968,22 @@ const ChatWindow = ({
                   </button>
                   {msg.senderId === currentUser.id && (
                     <>
-                      <button
-                        style={{
-                          fontSize: "14px",
-                          fontFamily: "monospace",
-                        }}
-                        onClick={() => handleEdit(msg)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        style={{
-                          fontSize: "14px",
-                          fontFamily: "monospace",
-                        }}
-                        onClick={() => openDeletePopup(msg.id)}
-                      >
-                        Delete
-                      </button>
+                      {(isAdmin || hasFeature("EDIT_MESSAGE")) && (
+                        <button
+                          style={{ fontSize: "14px", fontFamily: "monospace" }}
+                          onClick={() => handleEdit(msg)}
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {(isAdmin || hasFeature("DELETE_MESSAGE")) && (
+                        <button
+                          style={{ fontSize: "14px", fontFamily: "monospace" }}
+                          onClick={() => openDeletePopup(msg.id)}
+                        >
+                          Delete
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
@@ -1011,6 +1028,8 @@ const ChatWindow = ({
                 >
                   Deleted for Everyone
                 </em>
+              ) : msg.type === "location" ? (
+                <LocationMessage content={msg.content} />
               ) : msg.type === "file" ? (
                 msg.content.endsWith(".mp4") ? (
                   <video src={msg.content} width="200" controls />
@@ -1077,13 +1096,11 @@ const ChatWindow = ({
             >
               😀
             </button>
-
             {showEmojiPicker && (
               <div className="emoji-picker" ref={emojiPickerRef}>
                 <Picker data={data} onEmojiSelect={addEmoji} />
               </div>
             )}
-
             {mediaPreview ? (
               <div className="media-preview">
                 {mediaPreview.type.startsWith("video") ? (
@@ -1124,7 +1141,6 @@ const ChatWindow = ({
                 />
               </>
             )}
-
             <button onClick={() => fileInputRef.current.click()}>📎</button>
             <input
               type="file"
@@ -1133,6 +1149,18 @@ const ChatWindow = ({
               onChange={handleFileChange}
               className="hidden"
             />
+            {/* Location Share Button */}
+            {selectedUser &&
+              selectedUser.isAi === 0 &&
+              (currentUser?.isAdmin === 1 || hasFeature("LOCATION")) &&
+              canShowLocation && (
+                <LocationShare
+                  stompClient={stompClient}
+                  currentUser={currentUser}
+                  selectedUser={selectedUser}
+                  onSend={fetchMessages}
+                />
+              )}
 
             {!hasActivePlan && count >= 5 && currentUser.isAdmin !== 1 && (
               <div
@@ -1156,7 +1184,6 @@ const ChatWindow = ({
                 </span>
               </div>
             )}
-
             <button
               onClick={() => {
                 if (!hasActivePlan && count >= 5 && currentUser.isAdmin !== 1) {

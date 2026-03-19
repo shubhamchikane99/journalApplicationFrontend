@@ -19,7 +19,7 @@ const LoginForm = () => {
     setError("");
     try {
       const data = await fetchData(
-        `${endPoint.public}/log-in?userName=${usernameInput}&password=${passwordInput}`
+        `${endPoint.public}/log-in?userName=${usernameInput}&password=${passwordInput}`,
       );
 
       if (data.error || data.data.error) {
@@ -32,6 +32,16 @@ const LoginForm = () => {
         localStorage.setItem("userPassword", passwordInput);
         localStorage.setItem("userId", usernameInput);
 
+        const accessRole = await fetchData(
+          `${endPoint.UserAccessRole}/by-id?userId=${data?.data?.users?.id}`,
+        );
+
+        // Parse the nested JSON string and save
+        if (accessRole?.data?.json) {
+          const features = JSON.parse(accessRole.data.json);
+          // features = { AI_CHAT: true, LOCATION: false }
+          localStorage.setItem("features", JSON.stringify(features));
+        }
         const userData = data.data.users;
         login(userData);
         navigate(`/${usernameInput.trim().toLowerCase()}/dashboard/`);

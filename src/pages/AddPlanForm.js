@@ -30,12 +30,15 @@ export default function AddPlanForm() {
   const [apiError, setApiError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [plans, setPlans] = useState([]);
-
   const [editingPlanId, setEditingPlanId] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [accessFeatures, setAccessFeatures] = useState([
+    { key: "", value: true },
+  ]);
+  const [accessFeatureError, setAccessFeatureError] = useState("");
+  const [accessFeatureOptions, setAccessFeatureOptions] = useState([]);
 
   const addFeature = () => {
     const lastFeature = features[features.length - 1]?.trim() || "";
@@ -96,6 +99,10 @@ export default function AddPlanForm() {
     setApiError("");
     if (!validateForm()) return;
 
+    const accessFeaturesJson = accessFeatures
+      .filter((f) => f.key.trim() !== "")
+      .reduce((acc, f) => ({ ...acc, [f.key]: f.value }), {});
+
     const cleanedFeatures = features
       .filter((f) => f.trim() !== "")
       .map((f) => f.trim());
@@ -106,6 +113,7 @@ export default function AddPlanForm() {
       duration: Number(formData.duration),
       planFeature: cleanedFeatures.map((text) => ({ name: text })),
       isActive: formData.isActive ? 1 : 0,
+      accessFeatures: JSON.stringify(accessFeaturesJson),
     };
 
     setIsLoading(true);
@@ -197,6 +205,27 @@ export default function AddPlanForm() {
         ? plan.planFeature.map((f) => f.name)
         : [""],
     );
+
+    // ← add this block
+    if (plan.accessFeatures) {
+      try {
+        const parsed =
+          typeof plan.accessFeatures === "string"
+            ? JSON.parse(plan.accessFeatures)
+            : plan.accessFeatures;
+        // Convert object back to array for the UI
+        const asArray = Object.entries(parsed).map(([key, value]) => ({
+          key,
+          value,
+        }));
+        setAccessFeatures(
+          asArray.length > 0 ? asArray : [{ key: "", value: true }],
+        );
+      } catch {
+        setAccessFeatures([{ key: "", value: true }]);
+      }
+    }
+
     setFormErrors({});
     setFeatureError("");
     setApiError("");
@@ -214,6 +243,14 @@ export default function AddPlanForm() {
       duration: "",
     });
     setFeatures([""]);
+    setAccessFeatures({
+      // ← add this
+      CHAT: false,
+      AI_CHAT: false,
+      FILE_SHARE: false,
+      GROUP_CHAT: false,
+      VIDEO_CALL: false,
+    });
     setFormErrors({});
     setFeatureError("");
     setApiError("");
@@ -258,6 +295,60 @@ export default function AddPlanForm() {
     const opt = DURATION_OPTIONS.find((o) => o.value === Number(days));
     return opt ? opt.label : days ? `${days} Days` : "—";
   };
+
+  // plan features
+  const addAccessFeature = () => {
+    const last = accessFeatures[accessFeatures.length - 1];
+    if (!last?.key?.trim()) {
+      setAccessFeatureError(
+        "Please fill in the current feature before adding a new one.",
+      );
+      return;
+    }
+    setAccessFeatureError("");
+    setAccessFeatures([...accessFeatures, { key: "", value: true }]);
+  };
+
+  const removeAccessFeature = (index) => {
+    if (accessFeatures.length > 1) {
+      setAccessFeatures(accessFeatures.filter((_, i) => i !== index));
+      setAccessFeatureError("");
+    }
+  };
+
+  const updateAccessFeatureKey = (index, newKey) => {
+    const updated = [...accessFeatures];
+    updated[index] = { ...updated[index], key: newKey };
+    setAccessFeatures(updated);
+    if (newKey.trim() && accessFeatureError) setAccessFeatureError("");
+  };
+
+  const toggleAccessFeatureValue = (index) => {
+    const updated = [...accessFeatures];
+    updated[index].value = !updated[index].value;
+    setAccessFeatures(updated);
+  };
+
+  useEffect(() => {
+    const fetchAccessFeatureOptions = async () => {
+      try {
+        const response = await fetchData(
+          endPoint.userAccessFeature + "/get-all",
+        );
+        const rawData = response?.data ?? response;
+        if (Array.isArray(rawData)) {
+          const keys = rawData
+            .filter((item) => item.isActive === "1") // ← string "1" not number 1
+            .map((item) => item.name)
+            .filter(Boolean);
+          setAccessFeatureOptions(keys);
+        }
+      } catch (err) {
+        console.error("Error fetching access feature options:", err);
+      }
+    };
+    fetchAccessFeatureOptions();
+  }, []);
 
   return (
     <div>
@@ -452,6 +543,118 @@ export default function AddPlanForm() {
                     disabled={isLoading}
                   >
                     + Add another feature
+                  </button>
+                </div>
+
+                {/* ── Access Features (JSON flags) ──────────────────────────── */}
+                <div className="form-group">
+                  <span className="features-section-label">
+                    Access Features
+                  </span>
+                  <p
+                    style={{
+                      fontSize: "0.8rem",
+                      color: "var(--slate-500)",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    Add custom feature keys this plan unlocks (e.g. AI_CHAT,
+                    VIDEO_CALL)
+                  </p>
+
+                  <div className="features-list">
+                    {accessFeatures.map((af, index) => (
+                      <div
+                        key={index}
+                        className="feature-row"
+                        style={{ alignItems: "center", gap: "8px" }}
+                      >
+                        <span className="feature-row-num">{index + 1}</span>
+
+                        <select
+                          value={af.key}
+                          onChange={(e) =>
+                            updateAccessFeatureKey(index, e.target.value)
+                          }
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            padding: "7px 10px",
+                            borderRadius: "8px",
+                            border: "1.5px solid var(--slate-300)",
+                            fontSize: "0.85rem",
+                            background: "var(--white)",
+                            color: af.key
+                              ? "var(--slate-800)"
+                              : "var(--slate-400)",
+                          }}
+                        >
+                          <option value="" disabled>
+                            Select feature…
+                          </option>
+                          {accessFeatureOptions
+                            .filter(
+                              (opt) =>
+                                opt === af.key || // always show the currently selected value of THIS row
+                                !accessFeatures.some(
+                                  (other) => other.key === opt,
+                                ), // hide if selected in another row
+                            )
+                            .map((opt) => (
+                              <option key={opt} value={opt}>
+                                {opt}
+                              </option>
+                            ))}
+                        </select>
+
+                        <button
+                          type="button"
+                          onClick={() => toggleAccessFeatureValue(index)}
+                          style={{
+                            flexShrink: 0,
+                            width: "72px",
+                            padding: "6px 0",
+                            borderRadius: "12px",
+                            border: "1.5px solid",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            cursor: "pointer",
+                            background: af.value ? "#6366f1" : "transparent",
+                            borderColor: af.value
+                              ? "#6366f1"
+                              : "var(--slate-300)",
+                            color: af.value ? "#fff" : "var(--slate-500)",
+                          }}
+                        >
+                          {af.value ? "✓ On" : "✕ Off"}
+                        </button>
+
+                        {accessFeatures.length > 1 && (
+                          <button
+                            type="button"
+                            className="remove-btn"
+                            onClick={() => removeAccessFeature(index)}
+                            aria-label="Remove"
+                            style={{ flexShrink: 0 }}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {accessFeatureError && (
+                    <span className="error-text">{accessFeatureError}</span>
+                  )}
+
+                  <button
+                    type="button"
+                    className="add-feature-btn"
+                    onClick={addAccessFeature}
+                    disabled={isLoading}
+                  >
+                    + Add access feature
                   </button>
                 </div>
               </div>

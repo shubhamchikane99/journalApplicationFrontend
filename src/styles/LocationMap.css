@@ -1,0 +1,282 @@
+/* ─── Share Button ─────────────────────────────────── */
+.loc-share-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.loc-share-btn:hover {
+  background: #f0f0f0;
+}
+.loc-share-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── Popup Backdrop ─────────────────────────────────── */
+.loc-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 16px;
+}
+
+/* ─── Popup Box ─────────────────────────────────── */
+.loc-popup {
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  width: 400px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+/* ─── Popup Header ─────────────────────────────────── */
+.loc-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #eee;
+}
+.loc-popup-header span {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.loc-close-btn {
+  background: #f0f0f0;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  transition: background 0.2s;
+}
+.loc-close-btn:hover {
+  background: #e0e0e0;
+}
+
+/* ─── Map inside popup ─────────────────────────────────── */
+.loc-popup .leaflet-container {
+  height: 220px !important;
+  width: 100% !important;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  z-index: 1;
+}
+
+.loc-popup .leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+.loc-popup .leaflet-control-zoom-in,
+.loc-popup .leaflet-control-zoom-out {
+  width: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+  font-size: 16px !important;
+  color: #333 !important;
+  background: white !important;
+  border: none !important;
+}
+.loc-popup .leaflet-control-zoom-in:hover,
+.loc-popup .leaflet-control-zoom-out:hover {
+  background: #f0f0f0 !important;
+}
+
+/* ─── Coordinates ─────────────────────────────────── */
+.loc-popup-coords {
+  font-size: 13px;
+  color: #555;
+  text-align: center;
+  background: #f8f9fa;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+/* ─── Optional message input ─────────────────────────────────── */
+.loc-popup-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  font-family: monospace;
+  transition: border-color 0.2s;
+}
+.loc-popup-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* ─── Action Buttons ─────────────────────────────────── */
+.loc-popup-actions {
+  display: flex;
+  gap: 6px; /* ← reduced gap */
+  justify-content: flex-end;
+  margin-top: 4px;
+  align-items: center;
+}
+.loc-cancel-btn {
+  padding: 10px 14px; /* ← reduced padding */
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  color: #555;
+  font-weight: 500;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.loc-cancel-btn:hover {
+  background: #f5f5f5;
+}
+.loc-send-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.loc-send-btn:hover {
+  background: #0056b3;
+}
+
+/* ─── Location Message Card (in chat) ─────────────────────────────────── */
+.loc-message-card {
+  width: 280px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: white;
+}
+
+.loc-message-card .leaflet-container {
+  height: 160px !important;
+  width: 100% !important;
+  z-index: 1;
+}
+
+/* Optional user message in card */
+.loc-user-message {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #1a1a1a;
+  border-bottom: 1px solid #eee;
+  font-family: monospace;
+}
+
+/* Live badge */
+.loc-live-badge {
+  background: #ff4444;
+  color: white;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.5px;
+}
+.loc-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: white;
+  animation: loc-blink 1s infinite;
+  flex-shrink: 0;
+}
+
+/* Footer */
+.loc-message-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-top: 1px solid #eee;
+  background: #fafafa;
+}
+.loc-coords {
+  font-size: 11px;
+  color: #888;
+  font-family: monospace;
+}
+.loc-open-btn {
+  font-size: 12px;
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.loc-open-btn:hover {
+  text-decoration: underline;
+}
+
+/* Error */
+.loc-error {
+  font-size: 13px;
+  color: #cc0000;
+  padding: 8px;
+}
+
+/* ─── Animations ─────────────────────────────────── */
+@keyframes loc-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* ─── Mobile responsive ─────────────────────────────────── */
+@media (max-width: 480px) {
+  .loc-popup {
+    width: 100%;
+    border-radius: 16px;
+    padding: 16px;
+  }
+  .loc-message-card {
+    width: 240px;
+  }
+}

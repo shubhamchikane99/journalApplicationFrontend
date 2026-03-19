@@ -10,4 +10,6 @@ export const endPoint = {
   payment: "v1/payment",
   plan: "v1/plan",
   userMessageUsage: "v1/user-message-usage",
+  UserAccessRole: "v1/user-access-role",
+  userAccessFeature: "v1/user_access_feature",
 };

@@ -110,7 +110,7 @@ input[type="text"] {
 
 /* Send Button */
 .input-box button {
-  width: 50px;
+  width: 120px;
   padding: 8px 10px;
   font-size: 14px;
   background: #007bff;

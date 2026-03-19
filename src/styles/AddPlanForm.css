@@ -1126,3 +1126,38 @@
   border: 1px solid #bfdbfe;
   white-space: nowrap;
 }
+
+.access-features-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.access-feature-item {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.access-feature-item input[type="checkbox"] {
+  display: none;
+}
+
+.access-feature-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border: 1.5px solid var(--slate-300);
+  color: var(--slate-500);
+  background: transparent;
+  transition: all 0.2s;
+  cursor: pointer;
+  user-select: none;
+}
+
+.access-feature-pill.active {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: #fff;
+}

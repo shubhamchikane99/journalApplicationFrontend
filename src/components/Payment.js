@@ -42,6 +42,7 @@ const Pricing = () => {
             duration: p.duration,
             features: p.planFeature?.map((f) => f.name) || [],
             popular: p.isPopuler === 1,
+            accessFeatures: p.accessFeatures,
           }));
           setPlans(formattedPlans);
         }
@@ -144,6 +145,8 @@ const Pricing = () => {
         razorpaySignature: response.razorpay_signature,
         planId: selectedPlan.id,
         amount: selectedPlan.price,
+        accesJson: selectedPlan.accessFeatures,
+        planName: selectedPlan.name,
       };
       const verifyData = await postData(
         endPoint.payment + "/verify-payment",
@@ -152,6 +155,7 @@ const Pricing = () => {
 
       if (verifyData?.data) {
         alert("Payment successful! Plan activated.");
+        window.location.reload();
       } else {
         alert("Verification failed.");
       }

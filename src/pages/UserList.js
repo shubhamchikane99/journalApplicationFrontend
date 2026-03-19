@@ -4,6 +4,7 @@ import "../styles/UserList.css";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { REACT_APP_BACKEND_URL } from "../services/config";
+import { hasFeature } from "../services/featureService";
 
 const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
   const [typingUsers, setTypingUsers] = useState({});
@@ -253,10 +254,21 @@ const UserList = ({ users, allUsers, requestUsers, selectUser }) => {
 
   const getTabUsers = () => {
     switch (activeTab) {
-      case "chat":
-        return acceptRequestUsersList.length > 0
-          ? acceptRequestUsersList
-          : users || [];
+      case "chat": {
+        const chatUsers =
+          acceptRequestUsersList.length > 0
+            ? acceptRequestUsersList
+            : users || [];
+
+        if (loggedInUser?.isAdmin === 1) return chatUsers;
+
+        // Filter out AI users if AI_CHAT feature is not enabled
+        return chatUsers.filter((user) => {
+          if (user.isAi === 1) return hasFeature("AI_CHAT");
+          return true;
+        });
+      }
+
       case "request":
         return isRequestUpdateFromSocket
           ? requestUserList // show even if empty
