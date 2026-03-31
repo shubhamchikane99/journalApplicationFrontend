@@ -69,39 +69,46 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="login-container">
-      {loading && <Loader />}
-      <h2>Login</h2>
-      <div className="login-form">
-        <input
-          type="text"
-          placeholder="Username"
-          value={usernameInput}
-          onKeyDown={handleKeyDown}
-          onChange={(e) => setUsernameInput(e.target.value)}
-          className="login-input"
-          disabled={loading}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={passwordInput}
-          onKeyDown={handleKeyDown}
-          onChange={(e) => setPasswordInput(e.target.value)}
-          className="login-input"
-          disabled={loading}
-        />
-        <button
-          onClick={handleLogin}
-          className="login-button"
-          disabled={loading}
-        >
-          Login
-        </button>
-        {error && <p className="error-message">{error}</p>}
-        <p onClick={() => navigate("/signup")} className="signup-link">
-          Don't have an account? Sign Up here
-        </p>
+    <div className="login-page">
+      <div className="login-container">
+        {loading && <Loader />}
+        <h2>Login</h2>
+
+        <div className="login-form">
+          <input
+            type="text"
+            placeholder="Username"
+            value={usernameInput}
+            onKeyDown={handleKeyDown}
+            onChange={(e) => setUsernameInput(e.target.value)}
+            className="login-input"
+            disabled={loading}
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            value={passwordInput}
+            onKeyDown={handleKeyDown}
+            onChange={(e) => setPasswordInput(e.target.value)}
+            className="login-input"
+            disabled={loading}
+          />
+
+          <button
+            onClick={handleLogin}
+            className="login-button"
+            disabled={loading}
+          >
+            Login
+          </button>
+
+          {error && <p className="error-message">{error}</p>}
+
+          <p onClick={() => navigate("/signup")} className="signup-link">
+            Don't have an account? Sign Up here
+          </p>
+        </div>
       </div>
     </div>
   );

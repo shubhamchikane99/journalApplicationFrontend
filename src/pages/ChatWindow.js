@@ -833,6 +833,18 @@ const ChatWindow = ({
   const canShowLocation =
     currentUser.isAdmin === 1 || (hasActivePlan && count <= 5);
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]); // fires every time messages array changes
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [streamingMessage]);
+
   return (
     <div
       className="chat-window"

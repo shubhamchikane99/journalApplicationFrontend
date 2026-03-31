@@ -109,3 +109,31 @@ p.error {
 .signup-link:hover {
   text-decoration: underline;
 }
+
+/* Page wrapper (ONLY signup page) */
+.signup-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+/* Your existing container becomes card */
+.container {
+  width: 100%;
+  max-width: 420px;
+  padding: 30px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .container {
+    margin: 10px;
+    padding: 20px;
+  }
+}

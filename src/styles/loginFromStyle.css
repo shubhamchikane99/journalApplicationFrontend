@@ -115,3 +115,24 @@ h2 {
   border-radius: 8px;
   margin-top: 20px;
 }
+
+/* Full page wrapper (ONLY this page) */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* Background only for login page */
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+/* Keep your container same */
+.login-container {
+  width: 100%;
+  max-width: 380px;
+  padding: 30px 25px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}

@@ -190,89 +190,106 @@ const SignUpForm = () => {
     validateEmailFormat(email);
 
   return (
-    <div className="container">
-      {loading && <Loader />}
-      <h2>Sign Up</h2>
-      {error && <p className="error">{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="First Name"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Last Name"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-        {usernameError && <p className="error">{usernameError}</p>}
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        {emailError && <p className="error">{emailError}</p>}
-        {isOtpSent && (
-          <>
-            <input
-              type="text"
-              placeholder="Enter OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              required
-            />
+    <div className="signup-page">
+      {" "}
+      {/* ✅ NEW WRAPPER */}
+      <div className="container">
+        {loading && <Loader />}
+        <h2>Sign Up</h2>
+
+        {error && <p className="error">{error}</p>}
+
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            placeholder="First Name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+          />
+
+          <input
+            type="text"
+            placeholder="Last Name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+          />
+
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+
+          {usernameError && <p className="error">{usernameError}</p>}
+
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          {emailError && <p className="error">{emailError}</p>}
+
+          {isOtpSent && (
+            <>
+              <input
+                type="text"
+                placeholder="Enter OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={handleValidateOtp}
+                disabled={otpValidationLoading}
+              >
+                {otpValidationLoading ? "Validating..." : "Validate OTP"}
+              </button>
+            </>
+          )}
+
+          {!isOtpSent && (
             <button
               type="button"
-              onClick={handleValidateOtp}
-              disabled={otpValidationLoading}
+              onClick={handleSendOtp}
+              disabled={otpLoading || !isFormValid}
             >
-              {otpValidationLoading ? "Validating..." : "Validate OTP"}
+              {otpLoading ? "Sending..." : "Send OTP"}
             </button>
-          </>
-        )}
-        {!isOtpSent && (
-          <button
-            type="button"
-            onClick={handleSendOtp}
-            disabled={otpLoading || !isFormValid}
-          >
-            {otpLoading ? "Sending..." : "Send OTP"}
+          )}
+
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+
+          <button type="submit" disabled={loading || !isOtpVerified}>
+            {loading ? "Signing Up..." : "Sign Up"}
           </button>
-        )}
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-        />
-        <button type="submit" disabled={loading || !isOtpVerified}>
-          {loading ? "Signing Up..." : "Sign Up"}
-        </button>
-      </form>
-      <p onClick={() => navigate("/")} className="signup-link">
-        Already have an account? Login here
-      </p>
+        </form>
+
+        <p onClick={() => navigate("/")} className="signup-link">
+          Already have an account? Login here
+        </p>
+      </div>
     </div>
   );
 };
